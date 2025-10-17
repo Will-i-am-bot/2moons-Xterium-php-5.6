@@ -18,7 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @package 2Moons
-require_once('install/includes/functions.php'); // FIXED: load installer helpers
  * @author Jan Kröpke <info@2moons.cc>
  * @copyright 2009 Lucky
  * @copyright 2011 Jan Kröpke <info@2moons.cc>
@@ -38,6 +37,8 @@ $UNI	= 1;
 define('MODE', 'INSTALL');
 define('ROOT_PATH', str_replace('\\', '/', dirname(dirname(__FILE__))).'/');
 chdir(ROOT_PATH);
+
+require_once(ROOT_PATH . 'install/includes/functions.php');
 
 require('includes/common.php');
 
