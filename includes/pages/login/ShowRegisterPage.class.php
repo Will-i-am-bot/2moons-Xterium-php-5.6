@@ -247,10 +247,11 @@ class ShowRegisterPage extends AbstractPage
 	
 		$hashedPassword = PlayerUtil::cryptPassword($password); // FIXED: registration hashing
 	
+		// FIXED: registration sanitization and hashing
 		$SQL = "INSERT INTO ".USERS_VALID." SET
 				`userName` = '".$GLOBALS['DATABASE']->escape($userName)."',
-				`validationKey` = '".$GLOBALS['DATABASE']->escape($validationKey)."', // FIXED: registration sanitization
-				`password` = '".$GLOBALS['DATABASE']->escape($hashedPassword)."', // FIXED: registration hashing
+				`validationKey` = '".$GLOBALS['DATABASE']->escape($validationKey)."',
+				`password` = '".$GLOBALS['DATABASE']->escape($hashedPassword)."',
 				`email` = '".$GLOBALS['DATABASE']->escape($mailAddress)."',
 				`date` = '".TIMESTAMP."',
 				`ip` = '".$_SERVER['REMOTE_ADDR']."',
@@ -258,7 +259,7 @@ class ShowRegisterPage extends AbstractPage
 				`universe` = ".$GLOBALS['UNI'].",
 				`referralID` = ".$referralID.",
 				`externalAuthUID` = '".$GLOBALS['DATABASE']->escape($externalAuthUID)."',
-				`externalAuthMethod` = '".$GLOBALS['DATABASE']->escape($externalAuthMethod)."';"; // FIXED: registration sanitization
+				`externalAuthMethod` = '".$GLOBALS['DATABASE']->escape($externalAuthMethod)."';";
 				
 		$GLOBALS['DATABASE']->query($SQL);
 		
