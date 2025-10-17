@@ -755,6 +755,12 @@ function exceptionHandler($exception)
 		E_RECOVERABLE_ERROR	=> 'RECOVERABLE ERROR'
 	);
 	
+	if (!isset($errorType[$errno])) { // FIXED: undefined offset check
+		$errorLevel = 'Unknown error';
+	} else {
+		$errorLevel = $errorType[$errno];
+	}
+	
 	try
 	{
 		if(!class_exists('Config', false))
@@ -793,7 +799,7 @@ function exceptionHandler($exception)
 <!--[if IE 9 ]>    <html lang="de" class="no-js ie9"> <![endif]-->
 <!--[if (gt IE 9)|!(IE)]><!--> <html lang="de" class="no-js"> <!--<![endif]-->
 <head>
-	<title>'.$gameName.' - '.$errorType[$errno].'</title>
+	<title>'.$gameName.' - '.$errorLevel.'</title>
 	<meta name="generator" content="2Moons '.$VERSION.'">
 	<!-- 
 		This website is powered by 2Moons '.$VERSION.'
