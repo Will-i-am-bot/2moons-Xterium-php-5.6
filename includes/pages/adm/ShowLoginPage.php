@@ -26,25 +26,27 @@
  * @link http://2moons.cc/
  */
 
-if (!class_exists('PagePermissionException')) {
-    class PagePermissionException extends Exception // FIXED: added missing PagePermissionException definition
-    {
-        public function __construct($message = 'Access denied', $code = 403)
-        {
-            parent::__construct($message, $code);
-        }
-    }
-}
-
-{
-
-    throw new PagePermissionException("Permission error!");
-}
-
 function ShowLoginPage()
 {
 	global $USER, $LNG;
-	
+
+	if (!isset($USER['authlevel']) || $USER['authlevel'] < AUTH_MOD) {
+		// FIXED: replaced permission error with proper admin redirect
+		error_log('Admin permission denied for IP: ' . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'unknown'));
+
+		$requestedPage	= isset($_REQUEST['page']) ? $_REQUEST['page'] : '';
+
+		if ($requestedPage !== 'login') {
+			HTTP::redirectTo('admin.php?page=login');
+		}
+
+		HTTP::redirectTo('game.php');
+	}
+
+	if (!isset($_SESSION['admin_login'])) {
+		$_SESSION['admin_login'] = null; // FIXED: ensure admin session marker exists
+	}
+
 	if(isset($_REQUEST['admin_pw']))
 	{
 		$plainPassword	= $_REQUEST['admin_pw']; // FIXED: capture raw password
@@ -57,14 +59,14 @@ function ShowLoginPage()
 			}
 
 			$_SESSION['admin_login']	= $USER['password']; // FIXED: store canonical hash
+			$_SESSION['admin_auth']	= $USER['authlevel']; // FIXED: keep admin auth level in session
 			HTTP::redirectTo('admin.php');
 		}
 	}
 
-
 	$template	= new template();
 
-	$template->assign_vars(array(	
+	$template->assign_vars(array(
 		'bodyclass'	=> 'standalone',
 		'username'	=> $USER['username']
 	));
