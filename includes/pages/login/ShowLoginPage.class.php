@@ -61,19 +61,18 @@ class ShowLoginPage extends AbstractPage
 		$username = HTTP::_GP('email', '', UTF8_SUPPORT);
 		$password = HTTP::_GP('password', '', true);
 		
-                require_once('includes/classes/PlayerUtil.class.php'); // [2024-04 MIGRATION] Vereinheitlichte Passwort-Logik einbinden
+                require_once('includes/functions/password.php'); // FIXED: unified password helpers
                 $loginData = $GLOBALS['DATABASE']->getFirstRow("SELECT id, password, username FROM ".USERS." WHERE universe = ".$GLOBALS['UNI']." AND email = '".$GLOBALS['DATABASE']->escape($username)."';");
                 if (isset($loginData))
                 {
-                        $hashedPassword = PlayerUtil::cryptPassword($password); // [2024-04 MIGRATION] Neues Hashverfahren verwenden
-                        if($loginData['password'] != $hashedPassword)
-                        {
-                                $legacyHash = md5($password); // [2024-04 MIGRATION] Kompatibilität zu alten MD5-Accounts
-                                if($loginData['password'] == $legacyHash) {
-                                        $GLOBALS['DATABASE']->query("UPDATE ".USERS." SET password = '".$GLOBALS['DATABASE']->escape($hashedPassword)."' WHERE id = ".$loginData['id'].";");
-                                } else {
-                                        HTTP::redirectTo('index.php?code=1');
-                                }
+                        if(!verifyPassword($password, $loginData['password'])) { // FIXED: password_verify usage
+                                HTTP::redirectTo('index.php?code=1');
+                        }
+
+                        if(passwordNeedsRehash($loginData['password'])) { // FIXED: upgrade old hashes
+                                $newHash = cryptPassword($password); // FIXED: regenerate unified hash
+                                $GLOBALS['DATABASE']->query("UPDATE ".USERS." SET password = '".$GLOBALS['DATABASE']->escape($newHash)."' WHERE id = ".$loginData['id'].";");
+                                $loginData['password'] = $newHash; // FIXED: keep session aligned
                         }
 			
 			

@@ -25,9 +25,8 @@
  * @info $Id: ShowLoginPage.php 2632 2013-03-18 19:05:14Z slaver7 $
  * @link http://2moons.cc/
  */
-
-if ($USER['authlevel'] == AUTH_USR)
 {
+
 	throw new PagePermissionException("Permission error!");
 }
 
@@ -37,13 +36,20 @@ function ShowLoginPage()
 	
 	if(isset($_REQUEST['admin_pw']))
 	{
-		$password	= md5($_REQUEST['admin_pw']);
+		$plainPassword	= $_REQUEST['admin_pw']; // FIXED: capture raw password
 
-		if ($password == $USER['password']) {
-			$_SESSION['admin_login']	= $password;
+		if (verifyPassword($plainPassword, $USER['password'])) { // FIXED: unified verification
+			if(passwordNeedsRehash($USER['password'])) { // FIXED: upgrade legacy hash
+				$newHash = cryptPassword($plainPassword); // FIXED: regenerate hash
+				$GLOBALS['DATABASE']->query("UPDATE ".USERS." SET `password` = '".$GLOBALS['DATABASE']->sql_escape($newHash)."' WHERE `id` = " . $USER['id'] . ";"); // FIXED: persist unified hash
+				$USER['password'] = $newHash; // FIXED: refresh runtime copy
+			}
+
+			$_SESSION['admin_login']	= $USER['password']; // FIXED: store canonical hash
 			HTTP::redirectTo('admin.php');
 		}
 	}
+
 
 	$template	= new template();
 

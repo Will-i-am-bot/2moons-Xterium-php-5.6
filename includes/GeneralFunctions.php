@@ -669,16 +669,21 @@ function getbonusTwo($skillID,$Element)
 	return $ab1;
 }
 
+require_once(ROOT_PATH.'includes/functions/password.php'); // FIXED: load unified password helpers
+
 function cryptPassword($password)
 {
-	// http://www.phpgangsta.de/schoener-hashen-mit-bcrypt
-	global $resource, $salt;
-	if(!CRYPT_BLOWFISH || !isset($salt))
-	{
-		return md5($password);
-	} else {
-		return crypt($password, '$2a$09$'.$salt.'$');
-	}
+        return xterium_password_hash($password); // FIXED: delegate to unified hash
+}
+
+function verifyPassword($password, $hash)
+{
+        return xterium_password_verify($password, $hash); // FIXED: shared verification helper
+}
+
+function passwordNeedsRehash($hash)
+{
+        return xterium_password_needs_rehash($hash); // FIXED: consistent rehash detection
 }
 
 function combineArrayWithSingleElement($keys, $var) {
