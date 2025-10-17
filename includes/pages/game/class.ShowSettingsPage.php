@@ -242,31 +242,30 @@ class ShowSettingsPage extends AbstractPage
 			}
 		}
 		
-		if (!empty($newpassword) && md5($password) == $USER["password"])
-		{
-			$newpass 	 = md5($newpassword);
-			$SQL		.= "UPDATE ".USERS." SET password = '".$newpass."' WHERE id = ".$USER['id'].";";
-			$redirectTo	= 'index.php';
-			$SESSION->DestroySession();
-		}
+		if (!empty($newpassword) && verifyPassword($password, $USER["password"]))
+                {
+                        $newpass         = cryptPassword($newpassword); // FIXED: regenerate hash
+                        $SQL            .= "UPDATE ".USERS." SET password = '".$newpass."' WHERE id = ".$USER['id'].";";
+                        $redirectTo     = 'index.php';
+                        $SESSION->DestroySession();
+                }
 
-		if (!empty($email) && $email != $USER['email'])
-		{
-			if(cryptPassword($password) != $USER['password']) {
-				$this->printMessage($LNG['op_need_pass_mail']);
-			} elseif(!ValidateAddress($email)) {
-				$this->printMessage($LNG['op_not_vaild_mail']);
-			} else {
-				$Count 	= $GLOBALS['DATABASE']->getFirstCell("SELECT (SELECT COUNT(*) FROM ".USERS." WHERE id != ".$USER['id']." AND universe = ".$UNI." AND (email = '".$GLOBALS['DATABASE']->sql_escape($email)."' OR email_2 = '".$GLOBALS['DATABASE']->sql_escape($email)."')) + (SELECT COUNT(*) FROM ".USERS_VALID." WHERE universe = ".$UNI." AND email = '".$GLOBALS['DATABASE']->sql_escape($email)."')");
-				if (!empty($Count)) {
-					$this->printMessage(sprintf($LNG['op_change_mail_exist'], $email));
-				} else {
-					$SQL	.= "UPDATE ".USERS." SET email = '".$GLOBALS['DATABASE']->sql_escape($email)."', setmail = ".(TIMESTAMP + 604800)." WHERE id = ".$USER['id'].";";
-				}
-			}
-		}		
-			
-		
+                if (!empty($email) && $email != $USER['email'])
+                {
+                        if(!verifyPassword($password, $USER['password'])) { // FIXED: unified verification
+                                $this->printMessage($LNG['op_need_pass_mail']);
+                        } elseif(!ValidateAddress($email)) {
+                                $this->printMessage($LNG['op_not_vaild_mail']);
+                        } else {
+                                $Count  = $GLOBALS['DATABASE']->getFirstCell("SELECT (SELECT COUNT(*) FROM ".USERS." WHERE id != ".$USER['id']." AND universe = ".$UNI." AND (email = '".$GLOBALS['DATABASE']->sql_escape($email)."' OR email_2 = '".$GLOBALS['DATABASE']->sql_escape($email)."')) + (SELECT COUNT(*) FROM ".USERS_VALID." WHERE universe = ".$UNI." AND email = '".$GLOBALS['DATABASE']->sql_escape($email)."')");
+                                if (!empty($Count)) {
+                                        $this->printMessage(sprintf($LNG['op_change_mail_exist'], $email));
+                                } else {
+                                        $SQL    .= "UPDATE ".USERS." SET email = '".$GLOBALS['DATABASE']->sql_escape($email)."', setmail = ".(TIMESTAMP + 604800)." WHERE id = ".$USER['id'].";";
+                                }
+                        }
+                }
+
 		if ($vacation == 1)
 		{
 			if(!$this->CheckVMode())

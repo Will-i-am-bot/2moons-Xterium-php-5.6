@@ -30,17 +30,12 @@ class PlayerUtil {
 	
 	const POSITION_NOT_AVALIBLE = 1;
 	
-	static function cryptPassword($password)
-	{
-		// http://www.phpgangsta.de/schoener-hashen-mit-bcrypt
-		require('includes/config.php');
-		
-		if(!CRYPT_BLOWFISH || !isset($salt)) {
-			return md5($password);
-		} else {
-			return crypt($password, '$2a$09$'.$salt.'$');
-		}
-	}
+        static function cryptPassword($password)
+        {
+                require_once(ROOT_PATH.'includes/functions/password.php'); // FIXED: unified hash helper
+
+                return xterium_password_hash($password); // FIXED: delegate to shared hashing
+        }
 
 	static function isPositionFree($Universe, $Galaxy, $System, $Position, $Type = 1)
 	{

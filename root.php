@@ -36,15 +36,21 @@ $LNG->includeData(array('L18N', 'INGAME', 'ADMIN'));
 
 if(isset($_REQUEST['admin_pw']))
 {
-	$login = $GLOBALS['DATABASE']->getFirstRow("SELECT `id`, `username`, `dpath`, `authlevel`, `id_planet` FROM ".USERS." WHERE `id` = '1' AND `password` = '".cryptPassword($_REQUEST['admin_pw'])."';");
-	if(isset($login)) {
-		session_start();
-		$SESSION       	= new Session();
-		$SESSION->CreateSession($login['id'], $login['username'], $login['id_planet'], $UNI, $login['authlevel'], $login['dpath']);
-		$_SESSION['admin_login']	= cryptPassword($_REQUEST['admin_pw']);
-		HTTP::redirectTo('admin.php');
-	}
+        $login = $GLOBALS['DATABASE']->getFirstRow("SELECT `id`, `username`, `dpath`, `authlevel`, `id_planet`, `password` FROM ".USERS." WHERE `id` = '1';"); // FIXED: load stored hash
+        if(isset($login) && verifyPassword($_REQUEST['admin_pw'], $login['password'])) { // FIXED: verify with unified helper
+                if(passwordNeedsRehash($login['password'])) { // FIXED: upgrade legacy hash
+                        $login['password'] = cryptPassword($_REQUEST['admin_pw']); // FIXED: regenerate hash
+                        $GLOBALS['DATABASE']->query("UPDATE ".USERS." SET `password` = '".$GLOBALS['DATABASE']->sql_escape($login['password'])."' WHERE `id` = '1';"); // FIXED: persist new hash
+                }
+
+                session_start();
+                $SESSION        = new Session();
+                $SESSION->CreateSession($login['id'], $login['username'], $login['id_planet'], $UNI, $login['authlevel'], $login['dpath']);
+                $_SESSION['admin_login']        = $login['password']; // FIXED: store canonical hash
+                HTTP::redirectTo('admin.php');
+        }
 }
+
 $template	= new template();
 
 $tplDir	= $template->getTemplateDir();
