@@ -25,9 +25,20 @@
  * @info $Id: ShowLoginPage.php 2632 2013-03-18 19:05:14Z slaver7 $
  * @link http://2moons.cc/
  */
+
+if (!class_exists('PagePermissionException')) {
+    class PagePermissionException extends Exception // FIXED: added missing PagePermissionException definition
+    {
+        public function __construct($message = 'Access denied', $code = 403)
+        {
+            parent::__construct($message, $code);
+        }
+    }
+}
+
 {
 
-	throw new PagePermissionException("Permission error!");
+    throw new PagePermissionException("Permission error!");
 }
 
 function ShowLoginPage()
