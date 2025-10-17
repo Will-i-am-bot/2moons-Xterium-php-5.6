@@ -194,7 +194,10 @@ class ShowRegisterPage extends AbstractPage
 		if (Config::get('capaktiv') === '1') {
 			require_once('includes/libs/reCAPTCHA/recaptchalib.php');
 			
-			$resp = recaptcha_check_answer(Config::get('capprivate'), $_SERVER['REMOTE_ADDR'], $_REQUEST['recaptcha_challenge_field'], $_REQUEST['recaptcha_response_field']);
+			$challengeField = isset($_REQUEST['recaptcha_challenge_field']) ? $_REQUEST['recaptcha_challenge_field'] : ''; // FIXED: captcha field validation
+			$responseField  = isset($_REQUEST['recaptcha_response_field']) ? $_REQUEST['recaptcha_response_field'] : ''; // FIXED: captcha field validation
+			
+			$resp = recaptcha_check_answer(Config::get('capprivate'), $_SERVER['REMOTE_ADDR'], $challengeField, $responseField);
 		
 			if (!$resp->is_valid)
 			{
@@ -242,10 +245,12 @@ class ShowRegisterPage extends AbstractPage
 		
 		$validationKey	= md5(uniqid('2m'));
 	
+		$hashedPassword = PlayerUtil::cryptPassword($password); // FIXED: registration hashing
+	
 		$SQL = "INSERT INTO ".USERS_VALID." SET
 				`userName` = '".$GLOBALS['DATABASE']->escape($userName)."',
-				`validationKey` = '".$validationKey."',
-				`password` = '".md5($password)."',
+				`validationKey` = '".$GLOBALS['DATABASE']->escape($validationKey)."', // FIXED: registration sanitization
+				`password` = '".$GLOBALS['DATABASE']->escape($hashedPassword)."', // FIXED: registration hashing
 				`email` = '".$GLOBALS['DATABASE']->escape($mailAddress)."',
 				`date` = '".TIMESTAMP."',
 				`ip` = '".$_SERVER['REMOTE_ADDR']."',
@@ -253,7 +258,7 @@ class ShowRegisterPage extends AbstractPage
 				`universe` = ".$GLOBALS['UNI'].",
 				`referralID` = ".$referralID.",
 				`externalAuthUID` = '".$GLOBALS['DATABASE']->escape($externalAuthUID)."',
-				`externalAuthMethod` = '".$externalAuthMethod."';";
+				`externalAuthMethod` = '".$GLOBALS['DATABASE']->escape($externalAuthMethod)."';"; // FIXED: registration sanitization
 				
 		$GLOBALS['DATABASE']->query($SQL);
 		
