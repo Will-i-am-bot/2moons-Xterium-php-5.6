@@ -752,10 +752,12 @@ function exceptionHandler($exception)
 		E_USER_WARNING		=> 'USER WARNING',
 		E_USER_NOTICE		=> 'USER NOTICE',
 		E_STRICT			=> 'STRICT NOTICE',
-		E_RECOVERABLE_ERROR	=> 'RECOVERABLE ERROR'
+		E_RECOVERABLE_ERROR	=> 'RECOVERABLE ERROR',
+		E_DEPRECATED		=> 'DEPRECATED', // FIXED: extended error mapping
+		E_USER_DEPRECATED	=> 'USER DEPRECATED' // FIXED: extended error mapping
 	);
 	
-	if (!isset($errorType[$errno])) { // FIXED: undefined offset check
+	if (!isset($errorType[$errno])) { // FIXED: undefined offset protection
 		$errorLevel = 'Unknown error';
 	} else {
 		$errorLevel = $errorType[$errno];
@@ -845,7 +847,7 @@ function exceptionHandler($exception)
 <body id="overview" class="full">
 <table width="960">
 	<tr>
-		<th>'.$errorType[$errno].'</th>
+		<th>'.$errorLevel.'</th> // FIXED: undefined offset protection
 	</tr>
 	<tr>
 		<td class="left">
@@ -866,7 +868,7 @@ function exceptionHandler($exception)
 
 	echo str_replace(array('\\', ROOT_PATH, substr(ROOT_PATH, 0, 15)), array('/', '/', 'FILEPATH '), ob_get_clean());
 	
-	$errorText	= date("[d-M-Y H:i:s]", TIMESTAMP).' '.$errorType[$errno].': "'.strip_tags($exception->getMessage())."\"\r\n";
+	$errorText	= date("[d-M-Y H:i:s]", TIMESTAMP).' '.$errorLevel.': "'.strip_tags($exception->getMessage())."\"\r\n"; // FIXED: undefined offset protection
 	$errorText	.= 'File: '.$exception->getFile().' | Line: '.$exception->getLine()."\r\n";
 	$errorText	.= 'URL: '.PROTOCOL.HTTP_HOST.$_SERVER['REQUEST_URI'].' | Version: '.$VERSION."\r\n";
 	$errorText	.= "Stack trace:\r\n";
