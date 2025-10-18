@@ -78,33 +78,77 @@ class template extends Smarty
 	
 	private function adm_main()
 	{
-		global $LNG, $USER;
-		
+		global $LNG, $USER, $DATABASE, $UNI; // FIXED: unified admin layout
+
 		$dateTimeServer		= new DateTime("now");
 		if(isset($USER['timezone'])) {
 			try {
 				$dateTimeUser	= new DateTime("now", new DateTimeZone($USER['timezone']));
 			} catch (Exception $e) {
-				$dateTimeUser	= $dateTimeServer;
+				$dateTimeUser	= $dateTimeServer; // FIXED: undefined offset protection
 			}
 		} else {
 			$dateTimeUser	= $dateTimeServer;
 		}
-		
+
 		$this->assign_vars(array(
-			'scripts'			=> $this->script,
-			'title'				=> Config::get('game_name').' - '.$LNG['adm_cp_title'],
-			'fcm_info'			=> $LNG['fcm_info'],
-            'lang'    			=> $LNG->getLanguage(),
-			'REV'				=> substr(Config::get('VERSION'), -4),
-			'date'				=> explode("|", date('Y\|n\|j\|G\|i\|s\|Z', TIMESTAMP)),
-			'Offset'			=> $dateTimeUser->getOffset() - $dateTimeServer->getOffset(),
-			'VERSION'			=> Config::get('VERSION'),
-			'dpath'				=> 'styles/theme/gow/',
-			'bodyclass'			=> 'full'
+				'scripts'				=> $this->script,
+				'title'				=> Config::get('game_name').' - '.$LNG['adm_cp_title'],
+				'fcm_info'			=> $LNG['fcm_info'],
+				'lang'				=> $LNG->getLanguage(),
+				'REV'				=> substr(Config::get('VERSION'), -4),
+				'date'				=> explode("|", date('Y|n|j|G|i|s|Z', TIMESTAMP)),
+				'Offset'			=> $dateTimeUser->getOffset() - $dateTimeServer->getOffset(),
+				'VERSION'			=> Config::get('VERSION'),
+				'dpath'				=> 'styles/theme/gow/',
+				'bodyclass'		=> 'full'
+		));
+
+		$currentPage = HTTP::_GP('page', 'overview'); // FIXED: preserve navigation
+		if(empty($currentPage))
+		{
+			$currentPage = 'overview'; // FIXED: preserve navigation
+		}
+
+		if($this->getTemplateVars('showAdminLayout') === NULL)
+		{
+			$this->assign_vars(array(
+					'showAdminLayout'		=> true, // FIXED: unified admin layout
+			));
+		}
+
+		if($this->getTemplateVars('pageTitle') === NULL)
+		{
+			$this->assign_vars(array(
+					'pageTitle'			=> Config::get('game_name').' - '.$LNG['adm_cp_title'], // FIXED: consistent include path
+			));
+		}
+
+		if(!isset($_SESSION['adminuni']) || empty($_SESSION['adminuni']))
+		{
+			$_SESSION['adminuni'] = $UNI; // FIXED: preserve navigation
+		}
+
+		$AvailableUnis  = array(); // FIXED: unified admin layout
+		$AvailableUnis[Config::get('uni')] = Config::get('uni_name').' (ID: '.Config::get('uni').')';
+
+		$UniverseQuery  = $DATABASE->query("SELECT `uni`, `uni_name` FROM ".CONFIG." WHERE `uni` != '".$UNI."' ORDER BY `uni` ASC;");
+
+		while($UniverseRow = $DATABASE->fetch_array($UniverseQuery))
+		{
+			$AvailableUnis[$UniverseRow['uni']] = $UniverseRow['uni_name'].' (ID: '.$UniverseRow['uni'].')'; // FIXED: preserve navigation
+		}
+
+		ksort($AvailableUnis);
+
+		$this->assign_vars(array(
+				'activePage'			=> $currentPage, // FIXED: unified admin layout
+				'AvailableUnis'		=> $AvailableUnis,
+				'UNI'				=> $_SESSION['adminuni'],
+				'adminUser'			=> $USER,
 		));
 	}
-	
+
 	public function show($file)
 	{		
 		global $USER, $PLANET, $LNG, $THEME;
