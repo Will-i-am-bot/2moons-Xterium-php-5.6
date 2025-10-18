@@ -34,7 +34,11 @@ function BuildlistShipyard() {
 				window.clearInterval(ShipyardInterval);
 				return;
 			}
-			Amount = Amount.reset(Shipyard[0][1]);
+                        if (Amount && typeof Amount.reset === 'function') {
+                                Amount = Amount.reset(Shipyard[0][1]); // FIX: Use DecimalNumber reset when available.
+                        } else {
+                                Amount = Number(Shipyard[0][1]); // FIX: Fallback to numeric amount when reset() is unavailable.
+                        }
 			ShipyardList();
 		} else {
 			document.getElementById('auftr').options[0].innerHTML	= Amount.toString() + " " + Shipyard[0][0] + " " + bd_operating;

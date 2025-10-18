@@ -1,4 +1,8 @@
 var acstime = 0;
+
+if (typeof pointsPrice === 'undefined' || pointsPrice === null) {
+        var pointsPrice = {}; // FIX: Provide default container when server data is missing.
+}
 	
 function updateVars()
 {
@@ -499,7 +503,11 @@ function fleetPoints() {
 	$('.countdots').each(function() {
 		el_count	= Number($(this).val().replace(/[^[0-9]|\.]/g, ''));
 		el_name		= $(this).attr('name');
-		pointsCost += (Number(pointsPrice[el_name]) * el_count);
+		var el_pointsPrice = pointsPrice[el_name];
+		if (typeof el_pointsPrice === 'undefined') {
+			el_pointsPrice = 0; // FIX: Default to zero when no price is defined for the ship.
+		}
+		pointsCost += (Number(el_pointsPrice) * el_count);
 	});
 	$('.totalFleetPoints').text(NumberGetHumanReadable(Number(pointsCost)));
 }
