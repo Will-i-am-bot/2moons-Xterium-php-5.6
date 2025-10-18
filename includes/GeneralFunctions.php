@@ -217,6 +217,18 @@ function get_timezone_selector() {
 	return $timezones; 
 }
 
+function isSenateEnabled()
+{
+        // FIXED: added enable/disable toggles
+        return (bool) Config::get('senate_enabled');
+}
+
+function isGovernorsEnabled()
+{
+        // FIXED: added enable/disable toggles
+        return (bool) Config::get('governors_enabled');
+}
+
 function locale_date_format($format, $time, $LNG = NULL) {
 
 	//Workaound for locale Names.

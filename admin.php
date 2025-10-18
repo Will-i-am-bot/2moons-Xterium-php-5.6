@@ -80,14 +80,42 @@ switch($page)
 		include_once('includes/pages/adm/ShowInformationPage.php');
 		ShowInformationPage();
 	break;
-	case 'rights':
-		include_once('includes/pages/adm/ShowRightsPage.php');
-		ShowRightsPage();
-	break;
-	case 'config':
-		include_once('includes/pages/adm/ShowConfigBasicPage.php');
-		ShowConfigBasicPage();
-	break;
+        case 'rights':
+                include_once('includes/pages/adm/ShowRightsPage.php');
+                ShowRightsPage();
+        break;
+        case 'senate':
+                include_once('includes/pages/adm/ShowSenatePage.php');
+                $SenatePageObj = new ShowSenatePage();
+                $senateMode = HTTP::_GP('mode', '');
+                if($senateMode === 'enable') {
+                        // FIXED: added Senate and Governors admin integration
+                        $SenatePageObj->enable();
+                } elseif($senateMode === 'disable') {
+                        // FIXED: added enable/disable toggles
+                        $SenatePageObj->disable();
+                } else {
+                        $SenatePageObj->show();
+                }
+        break;
+        case 'governors':
+                include_once('includes/pages/adm/ShowGovernorsPage.php');
+                $GovernorsPageObj = new ShowGovernorsPage();
+                $governorsMode = HTTP::_GP('mode', '');
+                if($governorsMode === 'enable') {
+                        // FIXED: added Senate and Governors admin integration
+                        $GovernorsPageObj->enable();
+                } elseif($governorsMode === 'disable') {
+                        // FIXED: added enable/disable toggles
+                        $GovernorsPageObj->disable();
+                } else {
+                        $GovernorsPageObj->show();
+                }
+        break;
+        case 'config':
+                include_once('includes/pages/adm/ShowConfigBasicPage.php');
+                ShowConfigBasicPage();
+        break;
 	case 'configuni':
 		include_once('includes/pages/adm/ShowConfigUniPage.php');
 		ShowConfigUniPage();
