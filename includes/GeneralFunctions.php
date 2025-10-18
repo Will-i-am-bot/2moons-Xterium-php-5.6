@@ -526,10 +526,15 @@ function floattostring($Numeric, $Pro = 0, $Output = false){
 
 function isModulAvalible($ID)
 {
-	if(!isset($GLOBALS['CONF']['moduls'][$ID])) 
+	if(!isset($GLOBALS['CONF']['moduls'][$ID]))
 		$GLOBALS['CONF']['moduls'][$ID] = 1;
-	
+
 	return $GLOBALS['CONF']['moduls'][$ID] == 1 || (isset($USER['authlevel']) && $USER['authlevel'] > AUTH_USR);
+}
+
+function allowedToModule($moduleID)
+{
+	return isModulAvalible($moduleID);
 }
 
 function ClearCache()

@@ -18,14 +18,25 @@ class ShowGovernorsPage extends AbstractPage
                         message($LNG['sys_module_inactive'], '', 'error');
                 }
 
-                if(method_exists('Config', 'getAll'))
-                {
-                        $config = Config::getAll();
+                $gameDisable = 0;
 
-                        if(!empty($config->game_disable) && $config->game_disable == 1 && $USER['authlevel'] == AUTH_USR)
+                if(method_exists('Config', 'get'))
+                {
+                        $gameDisable = Config::get('game_disable', $USER['universe']);
+                }
+                elseif(method_exists('Config', 'getAll'))
+                {
+                        $config = Config::getAll(NULL, $USER['universe']);
+
+                        if(isset($config['game_disable']))
                         {
-                                message($LNG['ma_message_from_maintance'], '', 'error');
+                                $gameDisable = $config['game_disable'];
                         }
+                }
+
+                if(!empty($gameDisable) && $gameDisable == 1 && $USER['authlevel'] == AUTH_USR)
+                {
+                        message($LNG['ma_message_from_maintance'], '', 'error');
                 }
 
                 $sql = "SELECT * FROM %%GOVERNORS%% WHERE id_owner = :userId;";
