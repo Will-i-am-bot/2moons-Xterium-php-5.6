@@ -1,8 +1,4 @@
 var acstime = 0;
-
-if (typeof pointsPrice === 'undefined' || pointsPrice === null) {
-        var pointsPrice = {}; // FIX: Provide default container when server data is missing.
-}
 	
 function updateVars()
 {
@@ -499,15 +495,13 @@ function colorSet() {
 	});
 }
 function fleetPoints() {
-	var pointsCost = 0;
-	$('.countdots').each(function() {
-		el_count	= Number($(this).val().replace(/[^[0-9]|\.]/g, ''));
-		el_name		= $(this).attr('name');
-		var el_pointsPrice = pointsPrice[el_name];
-		if (typeof el_pointsPrice === 'undefined') {
-			el_pointsPrice = 0; // FIX: Default to zero when no price is defined for the ship.
-		}
-		pointsCost += (Number(el_pointsPrice) * el_count);
-	});
-	$('.totalFleetPoints').text(NumberGetHumanReadable(Number(pointsCost)));
+    if (typeof pointsPrice === 'undefined') return; // FIX: skip if no price table defined
+    var pointsCost = 0;
+    $('.countdots').each(function() {
+        var el_count = Number($(this).val().replace(/[^[0-9]|\.]/g, ''));
+        var el_name  = $(this).attr('name');
+        var el_pointsPrice = pointsPrice[el_name] || 0;
+        pointsCost += el_pointsPrice * el_count;
+    });
+    $('.totalFleetPoints').text(NumberGetHumanReadable(pointsCost));
 }
