@@ -68,7 +68,10 @@ function ShowLoginPage()
 
 	$template->assign_vars(array(
 		'bodyclass'	=> 'standalone',
-		'username'	=> $USER['username']
+		'username'	=> $USER['username'],
+		'showAdminLayout'	=> false, // FIXED: unified admin layout
+		'activePage'	=> 'login', // FIXED: preserve navigation
+		'pageTitle'	=> Config::get('game_name').' - '.$LNG['adm_cp_title'] // FIXED: consistent include path
 	));
 	$template->show('LoginPage.tpl');
 }
