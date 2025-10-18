@@ -556,7 +556,7 @@ switch($mode)
 					$SQL .= "OverviewNewsText		= '".$LNG['sql_welcome'].'V 1.0'."', ";
 					$SQL .= "uni_name 			= '".$LNG['sql_universe'].' 1'."', ";
 					$SQL .= "close_reason			= '".$LNG['sql_close_reason']."', ";
-					$SQL .= "moduls		= '".implode(';', array_fill(0, MODULE_AMOUNT - 1, 1))."';";
+					$SQL .= "moduls		= '".implode(';', array_fill(0, MODULE_AMOUNT, 1))."';";
 					$GLOBALS['DATABASE']->query($SQL);
 					
 					HTTP::redirectTo('index.php?mode=install&step=7');
