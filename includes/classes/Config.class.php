@@ -28,13 +28,15 @@
  
 class Config
 {
-	#static private $uniConfig;
-	#static private $gameConfig;
-	static private $config;
-	
-	static function init()
-	{	
-		$configResult = $GLOBALS['DATABASE']->query("SELECT * FROM ".CONFIG.";");
+        #static private $uniConfig;
+        #static private $gameConfig;
+        static private $config;
+        static private $toggleColumnsEnsured = false;
+
+        static function init()
+        {
+                self::ensureToggleColumns();
+                $configResult = $GLOBALS['DATABASE']->query("SELECT * FROM ".CONFIG.";");
 
 		while($configRow = $GLOBALS['DATABASE']->fetch_array($configResult))
 		{
@@ -42,9 +44,40 @@ class Config
 			self::$config[$configRow['uni']]	= $configRow;
 		}
 
-		$GLOBALS['DATABASE']->free_result($configResult);
-	}
-	
+                $GLOBALS['DATABASE']->free_result($configResult);
+        }
+
+        static private function ensureToggleColumns()
+        {
+                if(self::$toggleColumnsEnsured)
+                {
+                        return;
+                }
+
+                $columnsToCheck = array(
+                        'senate_enabled' => 1,
+                        'governors_enabled' => 1,
+                );
+
+                foreach($columnsToCheck as $columnName => $defaultValue)
+                {
+                        $columnQuery = $GLOBALS['DATABASE']->query("SHOW COLUMNS FROM ".CONFIG." LIKE '".$columnName."';");
+                        $exists = $GLOBALS['DATABASE']->numRows($columnQuery) > 0;
+                        $GLOBALS['DATABASE']->free_result($columnQuery);
+
+                        if($exists)
+                        {
+                                continue;
+                        }
+
+                        // FIXED: added Senate and Governors admin integration
+                        $GLOBALS['DATABASE']->query("ALTER TABLE ".CONFIG." ADD COLUMN `".$columnName."` TINYINT(1) NOT NULL DEFAULT '".$defaultValue."';");
+                        $GLOBALS['DATABASE']->query("UPDATE ".CONFIG." SET `".$columnName."` = '".$defaultValue."';");
+                }
+
+                self::$toggleColumnsEnsured = true;
+        }
+
 	static function setGlobals()
 	{	
 		// BC Wrapper
