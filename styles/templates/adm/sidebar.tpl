@@ -10,7 +10,6 @@
                                                 <li><a href="admin.php?page=chat" class="{if $activePage == 'chat'}current{/if}">{$LNG.mu_chat|default:'Chat Configuration'}</a></li>
                                                 <li><a href="admin.php?page=module" class="{if $activePage == 'module'}current{/if}">{$LNG.mu_module|default:'Modules'}</a></li>
                                                 <li><a href="admin.php?page=statsconf" class="{if $activePage == 'statsconf'}current{/if}">{$LNG.st_update_conf_header|default:'Stats Configuration'}</a></li>
-                                                <li><a href="admin.php?page=events" class="{if $activePage == 'events'}current{/if}">Event Verwaltung</a></li>
                                         </ul>
                                 </li>
                                 <li class="{if $activePage == 'search' || $activePage == 'fleets' || $activePage == 'accountdata' || $activePage == 'voucher'}current{/if}"><a class="menuitem">{$LNG.mu_game_info|default:'Game Activity'}</a>

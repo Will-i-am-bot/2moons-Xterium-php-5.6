@@ -104,18 +104,14 @@ switch($page)
 		include_once('includes/pages/adm/ShowFacebookPage.php');
 		ShowFacebookPage();
 	break;
-        case 'module':
-                include_once('includes/pages/adm/ShowModulePage.php');
-                ShowModulePage();
-        break;
-        case 'events':
-                include_once('includes/pages/adm/ShowEventsPage.php');
-                ShowEventsPage();
-        break;
-        case 'statsconf':
-                include_once('includes/pages/adm/ShowStatsPage.php');
-                ShowStatsPage();
-        break;
+	case 'module':
+		include_once('includes/pages/adm/ShowModulePage.php');
+		ShowModulePage();
+	break;
+	case 'statsconf':
+		include_once('includes/pages/adm/ShowStatsPage.php');
+		ShowStatsPage();
+	break;
 	case 'fleetsconf':
 		include_once('includes/pages/adm/ShowFleetsConfPage.php');
 		ShowFleetsConfPage();
