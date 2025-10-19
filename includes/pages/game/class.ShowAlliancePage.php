@@ -1,30 +1,5 @@
 <?php
 
-/**
- *  2Moons
- *  Copyright (C) 2012 Jan Kröpke
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- *
- * @package 2Moons
- * @author Jan Kröpke <info@2moons.cc>
- * @copyright 2012 Jan Kröpke <info@2moons.cc>
- * @license http://www.gnu.org/licenses/gpl.html GNU GPLv3 License
- * @version 1.7.3 (2013-05-19)
- * @info $Id: class.ShowAlliancePage.php 2640 2013-03-23 19:23:26Z slaver7 $
- * @link http://2moons.cc/
- */
-
 class ShowAlliancePage extends AbstractPage
 {
 	public static $requireModule = MODULE_ALLIANCE;
@@ -1340,160 +1315,234 @@ class ShowAlliancePage extends AbstractPage
 	}
 	function Fr1()
 	{
-		global $USER,$ALLIANCE;
+		global $USER;
 		
-		if($ALLIANCE['fraction'] == 1 || $ALLIANCE['fraction'] == 2 || $ALLIANCE['fraction'] == 3){
-		$this->printMessage('You already choosed a Fraction ', array('game.php?page=Alliance', 3));
-		}else{
-		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." set `fraction` = 1 where `id` = '".$USER['ally_id']."';");
-		$this->printMessage('You choosed the Fraction: Grabtor ', array('game.php?page=Alliance', 3));
-		die();
+		$ALLIANCE = $GLOBALS['DATABASE']->uniquequery("SELECT id, fraction FROM ".ALLIANCE." WHERE id = '".$USER['ally_id']."';");
+		
+		if(empty($ALLIANCE)) {
+			$this->printMessage('Alliance not found.', array('game.php?page=Alliance', 3));
+			return;
 		}
-		$this->tplObj->assign_vars(array(	
-		));
+
+		if($ALLIANCE['fraction'] != 0) {
+			$this->printMessage('You already chose a fraction.', array('game.php?page=Alliance', 3));
+			return;
+		}
+		
+		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." SET fraction = 1 WHERE id = '".$USER['ally_id']."';");
+		$this->printMessage('You chose the Fraction: Grabtor.', array('game.php?page=Alliance', 3));
 	}
+
 	function Fr2()
 	{
-		global $USER,$ALLIANCE;
+		global $USER;
 		
-		if($ALLIANCE['fraction'] == 0){
-		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." set `fraction` = 2 where `id` = '".$USER['ally_id']."';");
-		$this->printMessage('You choosed the Fraction: Senter ', array('game.php?page=Alliance', 3));
+		$ALLIANCE = $GLOBALS['DATABASE']->uniquequery("SELECT id, fraction FROM ".ALLIANCE." WHERE id = '".$USER['ally_id']."';");
+		
+		if(empty($ALLIANCE)) {
+			$this->printMessage('Alliance not found.', array('game.php?page=Alliance', 3));
+			return;
 		}
-		$this->tplObj->assign_vars(array(	
-		));
+
+		if($ALLIANCE['fraction'] != 0) {
+			$this->printMessage('You already chose a fraction.', array('game.php?page=Alliance', 3));
+			return;
+		}
+		
+		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." SET fraction = 2 WHERE id = '".$USER['ally_id']."';");
+		$this->printMessage('You chose the Fraction: Senter.', array('game.php?page=Alliance', 3));
 	}
+
 	function Fr3()
 	{
-		global $USER,$ALLIANCE;
+		global $USER;
 		
-		if($ALLIANCE['fraction'] == 0){
-		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." set `fraction` = 3 where `id` = '".$USER['ally_id']."';");
-		$this->printMessage('You choosed the Fraction: Tallkor ', array('game.php?page=Alliance', 3));
-		die();
+		$ALLIANCE = $GLOBALS['DATABASE']->uniquequery("SELECT id, fraction FROM ".ALLIANCE." WHERE id = '".$USER['ally_id']."';");
+		
+		if(empty($ALLIANCE)) {
+			$this->printMessage('Alliance not found.', array('game.php?page=Alliance', 3));
+			return;
 		}
-		$this->tplObj->assign_vars(array(	
-		));
+
+		if($ALLIANCE['fraction'] != 0) {
+			$this->printMessage('You already chose a fraction.', array('game.php?page=Alliance', 3));
+			return;
+		}
+		
+		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." SET fraction = 3 WHERE id = '".$USER['ally_id']."';");
+		$this->printMessage('You chose the Fraction: Tallkor.', array('game.php?page=Alliance', 3));
 	}
+	
+	
+	// Hilfsfunktion: Levelkosten berechnen
+	private function getLevelCost($currentLevel) {
+		return $currentLevel + 1; // Level 0 = 1, Level 1 = 2 usw.
+	}
+	
+	
 	function up1()
 	{
-		global $USER,$ALLIANCE;
+		global $USER;
 	
-		if($USER['stardust'] >= 1){
-		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." set 
-		FraLevel = FraLevel + 1,
-		armament = armament + 5,
-		armamentDA = armamentDA + 5,
-		Bumper = Bumper + 3,
-		Boards = Boards + 3,
-		SpeedFleet = SpeedFleet + 3,
-		TheftResource = TheftResource + 1,
-		CombatExp = CombatExp + 4,
-		LoseDefWreck = LoseDefWreck + 1,
-		RestorationDef = RestorationDef + 1
-		where `id` = '".$USER['ally_id']."';");
-		
-		$GLOBALS['DATABASE']->query("UPDATE ".USERS." set 
-		stardust = stardust - 1
-		where `id` = '".$USER['id']."';");
-		$this->printMessage('You´re now 1 lvl higher ', array('game.php?page=Alliance', 3));
+		$ALLIANCE = $GLOBALS['DATABASE']->uniquequery("SELECT * FROM ".ALLIANCE." WHERE id = '".$USER['ally_id']."';");
+		if(empty($ALLIANCE)) {
+			$this->printMessage('Alliance not found.', array('game.php?page=Alliance', 3));
+			return;
 		}
-		else{
-		$this->printMessage('You don´t have enough Stardust', array('game.php?page=Alliance', 3));
+
+		if($ALLIANCE['fraction'] != 1) {
+			$this->printMessage('You are not part of the Grabtor fraction.', array('game.php?page=Alliance', 3));
+			return;
 		}
-		
+
+		$cost = $this->getLevelCost($ALLIANCE['FraLevel']);
+
+		if($USER['stardust'] < $cost) {
+			$this->printMessage('You don’t have enough Stardust. You need '.$cost.'.', array('game.php?page=Alliance', 3));
+			return;
+		}
+
+		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." SET 
+			FraLevel = FraLevel + 1,
+			armament = armament + 5,
+			armamentDA = armamentDA + 5,
+			Bumper = Bumper + 3,
+			Boards = Boards + 3,
+			SpeedFleet = SpeedFleet + 3,
+			TheftResource = TheftResource + 1,
+			CombatExp = CombatExp + 4,
+			LoseDefWreck = LoseDefWreck + 1,
+			RestorationDef = RestorationDef + 1
+			WHERE id = '".$USER['ally_id']."';");
+
+		$GLOBALS['DATABASE']->query("UPDATE ".USERS." SET stardust = stardust - ".$cost." WHERE id = '".$USER['id']."';");
+
+		$this->printMessage('Your Alliance reached Level '.($ALLIANCE['FraLevel']+1).' (Cost '.$cost.' Stardust).', array('game.php?page=Alliance', 3));
 	}
+	
+	
 	function up2()
 	{
-		global $USER,$ALLIANCE;
+		global $USER;
 		
-		if($ALLIANCE['fraction'] == 2){
-		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." set 
-		FraLevel = FraLevel + 1,
-		Bumper = Bumper + 3,
-		Boards = Boards + 3,
-		armamentDA = armamentDA + 3,
-		FleetCapa = FleetCapa + 2,
-		FuelReduce = FuelReduce + 1,
-		ComExpExpo = ComExpExpo + 3,
-		GetAlliancePoints = GetAlliancePoints + 5 
-		where `id` = '".$USER['ally_id']."';");
-		
-		$GLOBALS['DATABASE']->query("UPDATE ".USERS." set 
-		stardust = stardust - 1
-		where `id` = '".$USER['id']."';");
-		$this->printMessage('You´re now 1 lvl higher ', array('game.php?page=Alliance', 3));
-		die();
-		}else{
-		$this->printMessage('You don´t have enough Stardust ', array('game.php?page=Alliance', 3));
+		$ALLIANCE = $GLOBALS['DATABASE']->uniquequery("SELECT * FROM ".ALLIANCE." WHERE id = '".$USER['ally_id']."';");
+		if(empty($ALLIANCE)) {
+			$this->printMessage('Alliance not found.', array('game.php?page=Alliance', 3));
+			return;
 		}
+
+		if($ALLIANCE['fraction'] != 2) {
+			$this->printMessage('You are not part of the Senter fraction.', array('game.php?page=Alliance', 3));
+			return;
+		}
+
+		$cost = $this->getLevelCost($ALLIANCE['FraLevel']);
+
+		if($USER['stardust'] < $cost) {
+			$this->printMessage('You don’t have enough Stardust. You need '.$cost.'.', array('game.php?page=Alliance', 3));
+			return;
+		}
+
+		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." SET 
+			FraLevel = FraLevel + 1,
+			Bumper = Bumper + 3,
+			Boards = Boards + 3,
+			armamentDA = armamentDA + 3,
+			FleetCapa = FleetCapa + 2,
+			FuelReduce = FuelReduce + 1,
+			ComExpExpo = ComExpExpo + 3,
+			GetAlliancePoints = GetAlliancePoints + 5 
+			WHERE id = '".$USER['ally_id']."';");
+
+		$GLOBALS['DATABASE']->query("UPDATE ".USERS." SET stardust = stardust - ".$cost." WHERE id = '".$USER['id']."';");
+
+		$this->printMessage('Your Alliance reached Level '.($ALLIANCE['FraLevel']+1).' (Cost '.$cost.' Stardust).', array('game.php?page=Alliance', 3));
 	}
+	
+	
 	function up3()
 	{
-		global $USER,$ALLIANCE;
+		global $USER;
 		
-		if($ALLIANCE['fraction'] == 3){
-		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." set 
-		FraLevel = FraLevel + 1,
-		armament = armament + 5,
-		Bumper = Bumper + 3,
-		Boards = Boards + 3,
-		ResourceProduk = ResourceProduk + 2,
-		EnergyProduk = EnergyProduk + 2,
-		SpeedFleet = SpeedFleet + 2,
-		ExpPeace = ExpPeace + 2,
-		SpeedExpo = SpeedExpo + 2
-		where `id` = '".$USER['ally_id']."';");
-		
-		$GLOBALS['DATABASE']->query("UPDATE ".USERS." set 
-		stardust = stardust - 1
-		where `id` = '".$USER['id']."';");
-		$this->printMessage('You´re now 1 lvl higher ', array('game.php?page=Alliance', 3));
-		die();
-		}else{
-		$this->printMessage('You don´t have enough Stardust ', array('game.php?page=Alliance', 3));
+		$ALLIANCE = $GLOBALS['DATABASE']->uniquequery("SELECT * FROM ".ALLIANCE." WHERE id = '".$USER['ally_id']."';");
+		if(empty($ALLIANCE)) {
+			$this->printMessage('Alliance not found.', array('game.php?page=Alliance', 3));
+			return;
 		}
+
+		if($ALLIANCE['fraction'] != 3) {
+			$this->printMessage('You are not part of the Tallkor fraction.', array('game.php?page=Alliance', 3));
+			return;
+		}
+
+		$cost = $this->getLevelCost($ALLIANCE['FraLevel']);
+
+		if($USER['stardust'] < $cost) {
+			$this->printMessage('You don’t have enough Stardust. You need '.$cost.'.', array('game.php?page=Alliance', 3));
+			return;
+		}
+
+		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." SET 
+			FraLevel = FraLevel + 1,
+			armament = armament + 5,
+			Bumper = Bumper + 3,
+			Boards = Boards + 3,
+			ResourceProduk = ResourceProduk + 2,
+			EnergyProduk = EnergyProduk + 2,
+			SpeedFleet = SpeedFleet + 2,
+			ExpPeace = ExpPeace + 2,
+			SpeedExpo = SpeedExpo + 2
+			WHERE id = '".$USER['ally_id']."';");
+
+		$GLOBALS['DATABASE']->query("UPDATE ".USERS." SET stardust = stardust - ".$cost." WHERE id = '".$USER['id']."';");
+
+		$this->printMessage('Your Alliance reached Level '.($ALLIANCE['FraLevel']+1).' (Cost '.$cost.' Stardust).', array('game.php?page=Alliance', 3));
 	}
 	
- function fraction()
+	
+	function fraction()
 	{	
-	global $ALLIANCE;
+		global $USER;
 		
-		$fraction	= HTTP::_GP('fraction', 0);
+		$ALLIANCE = $GLOBALS['DATABASE']->uniquequery("SELECT * FROM ".ALLIANCE." WHERE id = '".$USER['ally_id']."';");
+		
+		if(empty($ALLIANCE)) {
+			$this->printMessage('Alliance not found.', array('game.php?page=Alliance', 3));
+			return;
+		}
 
 		$this->tplObj->assign_vars(array(
-			'fraction'		=> $this->allianceData['fraction'],
-			'level'			=> $this->allianceData['FraLevel'],
-			'armament'  	=> $this->allianceData['armament'],
-			'armamentDA'  	=> $this->allianceData['armamentDA'],
-			'Bumper'  		=> $this->allianceData['Bumper'],
-			'Boards'  		=> $this->allianceData['Boards'],
-			'SpeedFleet'  	=> $this->allianceData['SpeedFleet'],
-			'TheftResource' => $this->allianceData['TheftResource'],
-			'CombatExp'  	=> $this->allianceData['CombatExp'],
-			'LoseDefWreck'  => $this->allianceData['LoseDefWreck'],
-			'RestorationDef'=> $this->allianceData['RestorationDef'],
-			'FleetCapa'=> $this->allianceData['FleetCapa'],
-			'FuelReduce'=> $this->allianceData['FuelReduce'],
-			'ComExpExpo'=> $this->allianceData['ComExpExpo'],
-			'GetAlliancePoints'=> $this->allianceData['GetAlliancePoints'],
-			'ResourceProduk'=> $this->allianceData['ResourceProduk'],
-			'EnergyProduk'=> $this->allianceData['EnergyProduk'],
-			'PeaceExp'=> $this->allianceData['ExpPeace'],
-			'SpeedExpo'=> $this->allianceData['SpeedExpo'],
-			''
-		));	
+			'fraction'		=> $ALLIANCE['fraction'],
+			'level'			=> $ALLIANCE['FraLevel'],
+			'armament'  	=> $ALLIANCE['armament'],
+			'armamentDA'  	=> $ALLIANCE['armamentDA'],
+			'Bumper'  		=> $ALLIANCE['Bumper'],
+			'Boards'  		=> $ALLIANCE['Boards'],
+			'SpeedFleet'  	=> $ALLIANCE['SpeedFleet'],
+			'TheftResource' => $ALLIANCE['TheftResource'],
+			'CombatExp'  	=> $ALLIANCE['CombatExp'],
+			'LoseDefWreck'  => $ALLIANCE['LoseDefWreck'],
+			'RestorationDef'=> $ALLIANCE['RestorationDef'],
+			'FleetCapa'		=> $ALLIANCE['FleetCapa'],
+			'FuelReduce'	=> $ALLIANCE['FuelReduce'],
+			'ComExpExpo'	=> $ALLIANCE['ComExpExpo'],
+			'GetAlliancePoints'=> $ALLIANCE['GetAlliancePoints'],
+			'ResourceProduk'=> $ALLIANCE['ResourceProduk'],
+			'EnergyProduk'	=> $ALLIANCE['EnergyProduk'],
+			'PeaceExp'		=> $ALLIANCE['ExpPeace'],
+			'SpeedExpo'		=> $ALLIANCE['SpeedExpo']
+		));
 
-		if($fraction == 1){
-		$this->display('page.alliance.fraction.tpl');
-		}elseif($fraction == 2){
-		$this->display('page.alliance.fraction2.tpl');
-		}elseif($fraction == 3){
-		$this->display('page.alliance.fraction3.tpl');
+		if($ALLIANCE['fraction'] == 1){
+			$this->display('page.alliance.fraction.tpl');
+		}elseif($ALLIANCE['fraction'] == 2){
+			$this->display('page.alliance.fraction2.tpl');
+		}elseif($ALLIANCE['fraction'] == 3){
+			$this->display('page.alliance.fraction3.tpl');
+		}else{
+			$this->printMessage('No fraction selected yet.', array('game.php?page=Alliance', 3));
 		}
 	}
-	
-	
 	private function adminPermissions()
 	{	
 		if(!$this->rights['RANKS']) {
