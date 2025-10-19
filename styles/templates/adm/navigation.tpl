@@ -36,6 +36,7 @@
                         <li class="ic-tools{if $activePage == 'universe'} active{/if}"><a href="admin.php?page=universe"><span>{$LNG.mu_universe|default:'Universe'}</span></a></li>
                         <li class="ic-tools{if $activePage == 'rights'} active{/if}"><a href="admin.php?page=rights&amp;mode=rights"><span>{$LNG.mu_moderation_page|default:'Rights'}</span></a></li>
                         <li class="ic-tools{if $activePage == 'rights' && $smarty.get.mode == 'users'} active{/if}"><a href="admin.php?page=rights&amp;mode=users"><span>{$LNG.mu_users_mod|default:'Permissions'}</span></a></li>
+                        <li class="ic-tools{if $activePage == 'events'} active{/if}"><a href="admin.php?page=events"><span>Event Verwaltung</span></a></li>
                         <li class="ic-tools{if $activePage == 'reset'} active{/if}"><a href="admin.php?page=reset"><span>{$LNG.re_reset_universe|default:'Reset'}</span></a></li>
                         <li class="ic-tools{if $activePage == 'active'} active{/if}"><a href="admin.php?page=active"><span>{$LNG.mu_active_user|default:'Activate Users'}</span></a></li>
                 </ul>
