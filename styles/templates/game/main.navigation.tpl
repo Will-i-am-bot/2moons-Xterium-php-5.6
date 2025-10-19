@@ -109,8 +109,8 @@ And as you have a 50% chance:
 </div><!--/left_menu-->
 <div style="height:0; overflow:hidden;" loop="false;" id="music">
 <audio id="beepataks" preload="auto">
-<source src="http://mass.xterium.ru/sound/sirena.mp3"></source>
-<source src="http://mass.xterium.ru/sound/sirena.ogg"></source>
+<source src="sound/sirena.mp3"></source>
+<source src="sound/sirena.ogg"></source>
 </audio>
 <script type="text/javascript">
 var ataks = "0";
