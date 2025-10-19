@@ -1,4 +1,5 @@
 {include file="overall_header.tpl"}
+{include file="head_nav.tpl"}
 <form action="" method="post">
 <table width="45%">
 <tr><th colspan="2">{$new_title}</th></tr>

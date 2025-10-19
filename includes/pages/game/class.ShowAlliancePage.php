@@ -543,163 +543,200 @@ class ShowAlliancePage extends AbstractPage
 		UPDATE ".ALLIANCE." SET ally_members = (SELECT COUNT(*) FROM ".USERS." WHERE ally_id = ".$this->allianceData['id'].") WHERE id = ".$this->allianceData['id'].";");
 		
 		$this->redirectTo('game.php?page=alliance');
-	}
-	
+	}	
 	function storage() 
 	{
-		global $USER, $PLANET, $LNG, $UNI, $CONF;
-		
-		$storages	= $GLOBALS['DATABASE']->query("SELECT storage_metal, storage_crystal, storage_deuterium FROM ".ALLIANCE." WHERE id = ".$this->allianceData['id'].";");
-		$storages  = $GLOBALS['DATABASE']->fetch_array($storages);
-		$this->tplObj->loadscript('jquery.countdown.js');
-		$this->tplObj->assign_vars(array(
+	global $USER, $PLANET, $LNG, $UNI, $CONF;
+
+	$storages = $GLOBALS['DATABASE']->query("SELECT storage_metal, storage_crystal, storage_deuterium, storage_stardust FROM ".ALLIANCE." WHERE id = ".$this->allianceData['id'].";");
+	$storages = $GLOBALS['DATABASE']->fetch_array($storages);
+
+	$this->tplObj->loadscript('jquery.countdown.js');
+	$this->tplObj->assign_vars(array(
 		'storage_metal' => pretty_number($storages['storage_metal']),
 		'storage_crystal' => pretty_number($storages['storage_crystal']),
 		'storage_deuterium' => pretty_number($storages['storage_deuterium']),
+		'storage_stardust' => pretty_number($storages['storage_stardust']), // ⭐️ hinzugefügt
 		'deposit_active' => ((!empty($USER['alliance_storage_deposit']) && $USER['alliance_storage_deposit'] > TIMESTAMP) ? ($USER['alliance_storage_deposit'] - TIMESTAMP) : 0),
 		'widraw_active' => ((!empty($USER['alliance_storage_widraw']) && $USER['alliance_storage_widraw'] > TIMESTAMP) ? ($USER['alliance_storage_widraw'] - TIMESTAMP) : 0),
-		
-		));
-		
-		$this->display('page.alliance.storage.tpl');
-	}
-	
-	function put() 
-	{
-		global $USER, $PLANET, $LNG, $UNI, $CONF, $resource;
-		
-		if($USER['alliance_storage_deposit'] > TIMESTAMP){
-        $this->printMessage("Respect the timers !", true, array('game.php?page=alliance&mode=storage', 2));
-        die();
-        }
-		
-		$premium_bank = 0;
-		if($USER['premium_reward_bank'] > 0 && $USER['premium_reward_bank_days'] > TIMESTAMP){
-		$premium_bank = $USER['premium_reward_bank'];
-		}
-		
-		$academy_bank = 1;
-		if($USER['academy_1306'] > 0){
-		$academy_bank = getbonusOne(1306,$USER['academy_1306']);
-		}
-		$cost = 0;
-		for($i = 0; $i < $USER[$resource[125]]; $i++)
-	{
-		$cost 	= 2000 * pow(2,$USER[$resource[125]] + $i);
-		
-	}
-	
-	
-		$max = $cost * $premium_bank * $academy_bank;
-		$this->tplObj->assign_vars(array(
-		'max' => pretty_number($max),	
-		));
-		
-		$this->display('page.alliance.put.tpl');
-	}
-	
-	function putsend() 
-	{
-		
-		global $USER, $PLANET, $LNG, $UNI, $CONF, $resource;
+	));
 
-		$metal = $_POST['resource901'];
-        $crystal = $_POST['resource902'];
-        $deuterium = $_POST['resource903'];
-		$premium_bank = 0;
-		if($USER['premium_reward_bank'] > 0 && $USER['premium_reward_bank_days'] > TIMESTAMP){
-		$premium_bank = $USER['premium_reward_bank'];
-		}
-		$academy_bank = 1;
-		if($USER['academy_1306'] > 0){
-		$academy_bank = getbonusOne(1306,$USER['academy_1306']);
-		}
-		
-		$cost = 0;
-		for($i = 0; $i < $USER[$resource[125]]; $i++)
-	{
-		$cost 	= 2000 * pow(2,$USER[$resource[125]] + $i);
-		
+	$this->display('page.alliance.storage.tpl');
 	}
-	$max = $cost * $premium_bank * $academy_bank;
-		if($metal < 0|| $crystal < 0  || $deuterium < 0){
-        $this->printMessage("Hack Attempt", true, array('game.php?page=alliance&mode=storage', 2));
-        die();
-        }elseif($PLANET['metal'] < $metal || $PLANET['crystal'] < $crystal  || $PLANET['deuterium'] < $deuterium){
-        $this->printMessage("You dont have enough resources", true, array('game.php?page=alliance&mode=storage', 2));
-        die();
-        }elseif($metal + $crystal + $deuterium > $max){
-        $this->printMessage("Maximum values are not respected", true, array('game.php?page=alliance&mode=storage', 2));
-        die();
-        }else{
-		$PLANET['metal'] -= $metal;
-        $PLANET['crystal'] -= $crystal;
-        $PLANET['deuterium'] -= $deuterium;
-        $GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." set `storage_metal` = `storage_metal` + ".$metal." where `id` = '".$this->allianceData['id']."';");
-        $GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." set `storage_crystal` = `storage_crystal` + ".$crystal." where `id` = '".$this->allianceData['id']."';");
-        $GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." set `storage_deuterium` = `storage_deuterium` + ".$deuterium." where `id` = '".$this->allianceData['id']."';");
-        $GLOBALS['DATABASE']->query("UPDATE ".USERS." set `alliance_storage_deposit` = ".(TIMESTAMP + ((12 * 60 * 60)- 10 * $USER['brotherhood'] * 60))." where `id` = '".$USER['id']."';");
-		$GLOBALS['DATABASE']->query("INSERT INTO `uni1_storages_logs` VALUES (".$GLOBALS['DATABASE']->GetInsertID().",".$this->allianceData['id'].",".$USER['id'].",".$metal.",".$crystal.",".$deuterium.", ".TIMESTAMP.", '1') ;");
-		$this->tplObj->assign_vars(array(
-			
-		));
-		$this->printMessage("Ressource are put in the vault");
+	
+	function put()
+{
+	global $USER, $PLANET, $LNG, $UNI, $CONF, $resource;
+
+	// Cooldown prüfen
+	if($USER['alliance_storage_deposit'] > TIMESTAMP)
+	{
+		$this->printMessage("Respect the timers!", true, array('game.php?page=alliance&mode=storage', 2));
+		return;
+	}
+
+	// --- Basiswert aus Universum ---
+	$base = isset($CONF['base_storage_value']) && $CONF['base_storage_value'] > 0 ? $CONF['base_storage_value'] : 2000;
+
+	// --- Forschungslevel (z. B. Antrieb, ID 125) ---
+	$researchLevel = isset($USER[$resource[125]]) ? (int)$USER[$resource[125]] : 1;
+	if($researchLevel < 1) $researchLevel = 1;
+
+	// --- Akademiebonus (ID 1204) ---
+	$academyLevel = isset($USER['academy_1204']) ? (int)$USER['academy_1204'] : 0;
+	$academyBonus = $academyLevel * 0.05; // 5 % pro Level
+
+	// --- Premiumbonus (direkter Multiplikator) ---
+	$premium_bank = 1;
+	if($USER['premium_reward_bank'] > 0 && $USER['premium_reward_bank_days'] > TIMESTAMP)
+	{
+		$premium_bank = $USER['premium_reward_bank']; // z. B. 5 = ×5
+	}
+
+	// --- Endberechnung nach deiner Formel ---
+	$max = $base * ($base * $academyBonus) * $premium_bank * $researchLevel;
+
+	$this->tplObj->assign_vars(array(
+		'max' => pretty_number($max),
+	));
+
+	$this->display('page.alliance.put.tpl');
 }
+
+function putsend()
+{
+	global $USER, $PLANET, $LNG, $UNI, $CONF, $resource;
+
+	$metal      = max(0, floatval($_POST['resource901']));
+	$crystal    = max(0, floatval($_POST['resource902']));
+	$deuterium  = max(0, floatval($_POST['resource903']));
+
+	// --- Basiswert aus Universum ---
+	$base = isset($CONF['base_storage_value']) && $CONF['base_storage_value'] > 0 ? $CONF['base_storage_value'] : 2000;
+
+	// --- Forschungslevel ---
+	$researchLevel = isset($USER[$resource[125]]) ? (int)$USER[$resource[125]] : 1;
+	if($researchLevel < 1) $researchLevel = 1;
+
+	// --- Akademiebonus ---
+	$academyLevel = isset($USER['academy_1204']) ? (int)$USER['academy_1204'] : 0;
+	$academyBonus = $academyLevel * 0.05;
+
+	// --- Premiumbonus ---
+	$premium_bank = 1;
+	if($USER['premium_reward_bank'] > 0 && $USER['premium_reward_bank_days'] > TIMESTAMP)
+	{
+		$premium_bank = $USER['premium_reward_bank'];
 	}
+
+	// --- Endberechnung (identisch wie in put) ---
+	$max = $base * ($base * $academyBonus) * $premium_bank * $researchLevel;
+
+	// --- Prüfungen ---
+	if($metal + $crystal + $deuterium > $max)
+	{
+		$this->printMessage("Maximum deposit limit exceeded (max ".pretty_number($max).").", true, array('game.php?page=alliance&mode=storage', 2));
+		return;
+	}
+
+	if($PLANET['metal'] < $metal || $PLANET['crystal'] < $crystal || $PLANET['deuterium'] < $deuterium)
+	{
+		$this->printMessage("Not enough resources on planet.", true, array('game.php?page=alliance&mode=storage', 2));
+		return;
+	}
+
+	// --- Ressourcen abziehen ---
+	$PLANET['metal']      -= $metal;
+	$PLANET['crystal']    -= $crystal;
+	$PLANET['deuterium']  -= $deuterium;
+
+	$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." 
+		SET storage_metal = storage_metal + ".$metal.",
+			storage_crystal = storage_crystal + ".$crystal.",
+			storage_deuterium = storage_deuterium + ".$deuterium."
+		WHERE id = '".$this->allianceData['id']."';");
+
+	$GLOBALS['DATABASE']->query("UPDATE ".USERS." 
+		SET alliance_storage_deposit = ".(TIMESTAMP + ((12 * 60 * 60) - 10 * $USER['brotherhood'] * 60))."
+		WHERE id = '".$USER['id']."';");
+
+	// --- Logeintrag ---
+	$GLOBALS['DATABASE']->query("INSERT INTO `uni1_storages_logs`
+		(allyID, userID, metal, crystal, deuterium, stardust, time, type)
+		VALUES
+		(".$this->allianceData['id'].", ".$USER['id'].", ".$metal.", ".$crystal.", ".$deuterium.", 0, ".TIMESTAMP.", 1);");
+
+	$this->printMessage("Resources successfully deposited into alliance vault.", true, array('game.php?page=alliance&mode=storage', 3));
+}
+
 	
-/* 	function vlyat() 
+	// ---------------------------------------------------------------
+	// Sternen-Erz Allianzbank Einzahlung (immer möglich, kein Timer)
+	// ---------------------------------------------------------------
+	function putStardust()
 	{
-		global $USER, $PLANET, $LNG, $UNI, $CONF, $resource;
-		if (!$this->rights['BANK'])
-			$this->redirectToHome();
-		if($USER['alliance_storage_widraw'] > TIMESTAMP){
-        $this->printMessage("Respect the timers !", true, array('game.php?page=alliance&mode=storage', 2));
-        die();
-        }
-		$max = $USER[$resource[125]] * 2000;
-		$this->tplObj->assign_vars(array(
-		'max' => pretty_number($max),	
-		));
-		
-		$this->display('page.alliance.vlyat.tpl');
-	}
-	function vlyatsend() 
-	{
-		global $USER, $PLANET, $LNG, $UNI, $CONF, $resource;
-		if (!$this->rights['BANK'])
-			$this->redirectToHome();
-		$metal = $_POST['resource901'];
-        $crystal = $_POST['resource902'];
-        $deuterium = $_POST['resource903'];
-		$storages	= $GLOBALS['DATABASE']->query("SELECT storage_metal, storage_crystal, storage_deuterium FROM ".ALLIANCE." WHERE id = ".$this->allianceData['id'].";");
-		$storages  = $GLOBALS['DATABASE']->fetch_array($storages);
-		if($metal < 0|| $crystal < 0  ||$deuterium < 0){
-        $this->printMessage("Hack Attempt", true, array('game.php?page=alliance&mode=storage', 2));
-        die();
-        }elseif($metal + $crystal + $deuterium > $USER[$resource[125]] * 2000){
-        $this->printMessage("Maximum values are not respected", true, array('game.php?page=alliance&mode=storage', 2));
-        die();
-        }elseif($storages['storage_metal'] < $metal || $storages['storage_crystal'] < $crystal  || $storages['storage_deuterium'] < $deuterium){
-        $this->printMessage("There is not enough resource in the bank", true, array('game.php?page=alliance&mode=storage', 2));
-        die();
-        }else{
-		$PLANET['metal'] += $metal;
-        $PLANET['crystal'] += $crystal;
-        $PLANET['deuterium'] += $deuterium;
-		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." set `storage_metal` = `storage_metal` - ".$metal." where `id` = '".$this->allianceData['id']."';");
-        $GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." set `storage_crystal` = `storage_crystal` - ".$crystal." where `id` = '".$this->allianceData['id']."';");
-        $GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." set `storage_deuterium` = `storage_deuterium` - ".$deuterium." where `id` = '".$this->allianceData['id']."';");
-		$GLOBALS['DATABASE']->query("UPDATE ".USERS." set `alliance_storage_widraw` = ".(TIMESTAMP + 12 * 60 * 60)." where `id` = '".$USER['id']."';");
-		$widrawID	= $GLOBALS['DATABASE']->GetInsertID();
-		$GLOBALS['DATABASE']->query("INSERT INTO `uni1_storages_logs` VALUES (".$widrawID.",".$this->allianceData['id'].",".$USER['id'].",".$metal.",".$crystal.",".$deuterium.", ".TIMESTAMP.", '2') ;");
-		
-		$this->tplObj->assign_vars(array(
-			
-		));
-		$this->printMessage("Ressource have been removed from the vault");
+		global $USER, $PLANET, $LNG, $UNI, $CONF;
+
+		// Abfrage: Hat der Spieler überhaupt Stardust?
+		if($USER['stardust'] <= 0)
+		{
+			$this->printMessage("You have no Stardust to deposit.", true, array('game.php?page=alliance&mode=storage', 2));
+			return;
 		}
-	} */
-	
+
+		// Zeigt einfach die Seite zum Einzahlen an (optional)
+		$this->tplObj->assign_vars(array(
+			'current_stardust' => pretty_number($USER['stardust']),
+		));
+
+		$this->display('page.alliance.putStardust.tpl');
+	}
+	// ---------------------------------------------------------------
+// Sternen-Erz Allianzbank Einzahlung (Server-Seite Verarbeitung)
+// ---------------------------------------------------------------
+function putStardustSend()
+{
+	global $USER, $PLANET, $LNG, $UNI, $CONF;
+
+	// Menge aus POST
+	$amount = isset($_POST['stardust']) ? floatval($_POST['stardust']) : 0;
+
+	// Sicherheitsprüfungen
+	if($amount <= 0)
+	{
+		$this->printMessage("Invalid amount.", true, array('game.php?page=alliance&mode=storage', 2));
+		return;
+	}
+
+	if($USER['stardust'] < $amount)
+	{
+		$this->printMessage("You don't have enough Stardust.", true, array('game.php?page=alliance&mode=storage', 2));
+		return;
+	}
+
+	// Spieler verliert Stardust
+	$GLOBALS['DATABASE']->query("UPDATE ".USERS." 
+		SET stardust = stardust - ".$amount." 
+		WHERE id = '".$USER['id']."';");
+
+	// Allianz-Bank erhält Stardust
+	$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." 
+		SET storage_stardust = storage_stardust + ".$amount." 
+		WHERE id = '".$this->allianceData['id']."';");
+
+	// Log-Eintrag: Typ 3 = Stardust-Einzahlung
+	$GLOBALS['DATABASE']->query("INSERT INTO `uni1_storages_logs`
+		(allyID, userID, metal, crystal, deuterium, stardust, time, type)
+		VALUES
+		(".$this->allianceData['id'].", ".$USER['id'].", 0, 0, 0, ".$amount.", ".TIMESTAMP.", 3);");
+
+	// Erfolgsmeldung
+	$this->printMessage(
+		"You successfully deposited ".pretty_number($amount)." Stardust into your alliance vault.",
+		true,
+		array('game.php?page=alliance&mode=storage', 3)
+	);
+	}
 	function issue() 
 	{
 		global $USER, $PLANET, $LNG, $UNI, $CONF;
@@ -1383,7 +1420,7 @@ class ShowAlliancePage extends AbstractPage
 	function up1()
 	{
 		global $USER;
-	
+
 		$ALLIANCE = $GLOBALS['DATABASE']->uniquequery("SELECT * FROM ".ALLIANCE." WHERE id = '".$USER['ally_id']."';");
 		if(empty($ALLIANCE)) {
 			$this->printMessage('Alliance not found.', array('game.php?page=Alliance', 3));
@@ -1397,13 +1434,16 @@ class ShowAlliancePage extends AbstractPage
 
 		$cost = $this->getLevelCost($ALLIANCE['FraLevel']);
 
-		if($USER['stardust'] < $cost) {
-			$this->printMessage('You don’t have enough Stardust. You need '.$cost.'.', array('game.php?page=Alliance', 3));
+		// Allianzbank prüfen, nicht den Spieler
+		if($ALLIANCE['storage_stardust'] < $cost) {
+			$this->printMessage('The Alliance bank does not have enough Stardust. Required: '.$cost, array('game.php?page=Alliance', 3));
 			return;
 		}
 
+		// Allianz upgraden + Stardust aus Bank abziehen
 		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." SET 
 			FraLevel = FraLevel + 1,
+			storage_stardust = storage_stardust - ".$cost.",
 			armament = armament + 5,
 			armamentDA = armamentDA + 5,
 			Bumper = Bumper + 3,
@@ -1415,16 +1455,14 @@ class ShowAlliancePage extends AbstractPage
 			RestorationDef = RestorationDef + 1
 			WHERE id = '".$USER['ally_id']."';");
 
-		$GLOBALS['DATABASE']->query("UPDATE ".USERS." SET stardust = stardust - ".$cost." WHERE id = '".$USER['id']."';");
-
-		$this->printMessage('Your Alliance reached Level '.($ALLIANCE['FraLevel']+1).' (Cost '.$cost.' Stardust).', array('game.php?page=Alliance', 3));
+		$this->printMessage('Your Alliance reached Level '.($ALLIANCE['FraLevel']+1).' (Cost '.$cost.' Stardust from the Alliance bank).', array('game.php?page=Alliance', 3));
 	}
-	
-	
+
+
 	function up2()
 	{
 		global $USER;
-		
+
 		$ALLIANCE = $GLOBALS['DATABASE']->uniquequery("SELECT * FROM ".ALLIANCE." WHERE id = '".$USER['ally_id']."';");
 		if(empty($ALLIANCE)) {
 			$this->printMessage('Alliance not found.', array('game.php?page=Alliance', 3));
@@ -1438,32 +1476,31 @@ class ShowAlliancePage extends AbstractPage
 
 		$cost = $this->getLevelCost($ALLIANCE['FraLevel']);
 
-		if($USER['stardust'] < $cost) {
-			$this->printMessage('You don’t have enough Stardust. You need '.$cost.'.', array('game.php?page=Alliance', 3));
+		if($ALLIANCE['storage_stardust'] < $cost) {
+			$this->printMessage('The Alliance bank does not have enough Stardust. Required: '.$cost, array('game.php?page=Alliance', 3));
 			return;
 		}
 
 		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." SET 
 			FraLevel = FraLevel + 1,
+			storage_stardust = storage_stardust - ".$cost.",
 			Bumper = Bumper + 3,
 			Boards = Boards + 3,
 			armamentDA = armamentDA + 3,
 			FleetCapa = FleetCapa + 2,
 			FuelReduce = FuelReduce + 1,
 			ComExpExpo = ComExpExpo + 3,
-			GetAlliancePoints = GetAlliancePoints + 5 
+			GetAlliancePoints = GetAlliancePoints + 5
 			WHERE id = '".$USER['ally_id']."';");
 
-		$GLOBALS['DATABASE']->query("UPDATE ".USERS." SET stardust = stardust - ".$cost." WHERE id = '".$USER['id']."';");
-
-		$this->printMessage('Your Alliance reached Level '.($ALLIANCE['FraLevel']+1).' (Cost '.$cost.' Stardust).', array('game.php?page=Alliance', 3));
+		$this->printMessage('Your Alliance reached Level '.($ALLIANCE['FraLevel']+1).' (Cost '.$cost.' Stardust from the Alliance bank).', array('game.php?page=Alliance', 3));
 	}
-	
-	
+
+
 	function up3()
 	{
 		global $USER;
-		
+
 		$ALLIANCE = $GLOBALS['DATABASE']->uniquequery("SELECT * FROM ".ALLIANCE." WHERE id = '".$USER['ally_id']."';");
 		if(empty($ALLIANCE)) {
 			$this->printMessage('Alliance not found.', array('game.php?page=Alliance', 3));
@@ -1477,13 +1514,14 @@ class ShowAlliancePage extends AbstractPage
 
 		$cost = $this->getLevelCost($ALLIANCE['FraLevel']);
 
-		if($USER['stardust'] < $cost) {
-			$this->printMessage('You don’t have enough Stardust. You need '.$cost.'.', array('game.php?page=Alliance', 3));
+		if($ALLIANCE['storage_stardust'] < $cost) {
+			$this->printMessage('The Alliance bank does not have enough Stardust. Required: '.$cost, array('game.php?page=Alliance', 3));
 			return;
 		}
 
 		$GLOBALS['DATABASE']->query("UPDATE ".ALLIANCE." SET 
 			FraLevel = FraLevel + 1,
+			storage_stardust = storage_stardust - ".$cost.",
 			armament = armament + 5,
 			Bumper = Bumper + 3,
 			Boards = Boards + 3,
@@ -1494,12 +1532,8 @@ class ShowAlliancePage extends AbstractPage
 			SpeedExpo = SpeedExpo + 2
 			WHERE id = '".$USER['ally_id']."';");
 
-		$GLOBALS['DATABASE']->query("UPDATE ".USERS." SET stardust = stardust - ".$cost." WHERE id = '".$USER['id']."';");
-
-		$this->printMessage('Your Alliance reached Level '.($ALLIANCE['FraLevel']+1).' (Cost '.$cost.' Stardust).', array('game.php?page=Alliance', 3));
+		$this->printMessage('Your Alliance reached Level '.($ALLIANCE['FraLevel']+1).' (Cost '.$cost.' Stardust from the Alliance bank).', array('game.php?page=Alliance', 3));
 	}
-	
-	
 	function fraction()
 	{	
 		global $USER;

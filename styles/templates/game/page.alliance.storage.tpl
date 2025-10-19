@@ -7,64 +7,80 @@
         <div class="left_part">	
            Alliance Storage
         </div>
-         {if $rights.BANK}<a href="?page=alliance&mode=logstorage" class="batn_lincks right_flank over imperia">statistics</a>      {/if}                 
+         {if $rights.BANK}<a href="?page=alliance&mode=logstorage" class="batn_lincks right_flank over imperia">statistics</a>{/if}                 
     </div> 
+
     <div class="ally_contents sepor_conten res_901">
     	<div class="res_ico"></div>
         <div class="res_text">Metal:</div>
         <div class="res_count">{$storage_metal}</div>
         <div class="clear"></div>
     </div>
+
     <div class="ally_contents sepor_conten res_902">
     	<div class="res_ico"></div>
         <div class="res_text">Crystal:</div>
         <div class="res_count">{$storage_crystal}</div>
         <div class="clear"></div>
     </div>
+
     <div class="ally_contents sepor_conten res_903">
     	<div class="res_ico"></div>
         <div class="res_text">Deuterium:</div>
         <div class="res_count">{$storage_deuterium}</div>
         <div class="clear"></div>
     </div>
-   
-    <div class="ally_contents" style="padding:10px;">
-      
-                <div class="btn_border right_flank"> 
-				 {if $rights.BANK}
-            <a href="?page=alliance&amp;mode=issue" method="post" >
-            	<input value="Issue" type="submit">
-            </a>
-			{/if}
-        </div>
-                
 
-        
-				{if !empty($deposit_active)}
-				<div class="btn_border right_flank">
-				
-                	<button><span style="color:red;" class="countdown2"  secs="{$deposit_active}"></span></button>
-        		</div>
-				{else}
-				<div class="btn_border right_flank">
-                
-            <a href="?page=alliance&amp;mode=put">
-                <input value="Make a contribution" type="submit">
-            </a>
-        		</div>
-				{/if}
-        
-        <div class="clear"></div>        
+    <!-- 🌟 NEU: Stardust-Bereich -->
+    <div class="ally_contents sepor_conten res_stardust">
+    	<div class="res_ico"></div>
+        <div class="res_text">Stardust:</div>
+        <div class="res_count">{$storage_stardust|default:0}</div>
+        <div class="clear"></div>
     </div>
-    
+
+    <!-- 🌟 Formular: Stardust einzahlen -->
     <div class="gray_stripe">
-                    </div>
+        <div class="left_part">Deposit Stardust</div>
+    </div>
+
+    <div class="ally_contents" style="padding:10px;">
+        <form action="game.php?page=alliance&amp;mode=putStardustSend" method="post">
+            <label>Amount of Stardust to deposit:</label><br>
+            <input type="number" name="stardust" min="1" max="9999999999" value="0" style="width:150px; text-align:center;"> 
+            <input type="submit" class="button" value="Deposit Stardust">
+        </form>
+        <div class="clear"></div>
+    </div>
+    <!-- 🌟 Ende Stardust -->
+
+    <div class="ally_contents" style="padding:10px;">
+        <div class="btn_border right_flank">
+            {if $rights.BANK}
+                <a href="?page=alliance&amp;mode=issue" method="post"><input value="Issue" type="submit"></a>
+            {/if}
+        </div>
+
+        {if !empty($deposit_active)}
+        <div class="btn_border right_flank">
+            <button><span style="color:red;" class="countdown2" secs="{$deposit_active}"></span></button>
+        </div>
+        {else}
+        <div class="btn_border right_flank">
+            <a href="?page=alliance&amp;mode=put"><input value="Make a contribution" type="submit"></a>
+        </div>
+        {/if}
+        <div class="clear"></div>
+    </div>
+
+    <div class="gray_stripe"></div>
 </div>
+
 <div class="ally_bottom" style="text-align:left;">
     <a href="?page=alliance">back</a>
 </div>
+
 </div>
 </div>
-            <div class="clear"></div>            
-        </div>
+<div class="clear"></div>
 {/block}

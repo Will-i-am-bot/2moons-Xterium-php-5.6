@@ -1,4 +1,5 @@
 {include file="overall_header.tpl"}
+{include file="head_nav.tpl"}
 <form action="" method="post">
 <input type="hidden" name="mode" value="agregar">
 <table width="40%">
