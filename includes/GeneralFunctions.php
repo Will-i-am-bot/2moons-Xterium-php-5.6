@@ -526,15 +526,10 @@ function floattostring($Numeric, $Pro = 0, $Output = false){
 
 function isModulAvalible($ID)
 {
-	if(!isset($GLOBALS['CONF']['moduls'][$ID]))
+	if(!isset($GLOBALS['CONF']['moduls'][$ID])) 
 		$GLOBALS['CONF']['moduls'][$ID] = 1;
-
+	
 	return $GLOBALS['CONF']['moduls'][$ID] == 1 || (isset($USER['authlevel']) && $USER['authlevel'] > AUTH_USR);
-}
-
-function allowedToModule($moduleID)
-{
-	return isModulAvalible($moduleID);
 }
 
 function ClearCache()
@@ -757,16 +752,8 @@ function exceptionHandler($exception)
 		E_USER_WARNING		=> 'USER WARNING',
 		E_USER_NOTICE		=> 'USER NOTICE',
 		E_STRICT			=> 'STRICT NOTICE',
-		E_RECOVERABLE_ERROR	=> 'RECOVERABLE ERROR',
-		E_DEPRECATED		=> 'DEPRECATED', // FIXED: extended error mapping
-		E_USER_DEPRECATED	=> 'USER DEPRECATED' // FIXED: extended error mapping
+		E_RECOVERABLE_ERROR	=> 'RECOVERABLE ERROR'
 	);
-	
-	if (!isset($errorType[$errno])) { // FIXED: undefined offset protection
-		$errorLevel = 'Unknown error';
-	} else {
-		$errorLevel = $errorType[$errno];
-	}
 	
 	try
 	{
@@ -806,7 +793,7 @@ function exceptionHandler($exception)
 <!--[if IE 9 ]>    <html lang="de" class="no-js ie9"> <![endif]-->
 <!--[if (gt IE 9)|!(IE)]><!--> <html lang="de" class="no-js"> <!--<![endif]-->
 <head>
-	<title>'.$gameName.' - '.$errorLevel.'</title>
+	<title>'.$gameName.' - '.$errorType[$errno].'</title>
 	<meta name="generator" content="2Moons '.$VERSION.'">
 	<!-- 
 		This website is powered by 2Moons '.$VERSION.'
@@ -852,7 +839,7 @@ function exceptionHandler($exception)
 <body id="overview" class="full">
 <table width="960">
 	<tr>
-		<th>'.$errorLevel.'</th> // FIXED: undefined offset protection
+		<th>'.$errorType[$errno].'</th>
 	</tr>
 	<tr>
 		<td class="left">
@@ -873,7 +860,7 @@ function exceptionHandler($exception)
 
 	echo str_replace(array('\\', ROOT_PATH, substr(ROOT_PATH, 0, 15)), array('/', '/', 'FILEPATH '), ob_get_clean());
 	
-	$errorText	= date("[d-M-Y H:i:s]", TIMESTAMP).' '.$errorLevel.': "'.strip_tags($exception->getMessage())."\"\r\n"; // FIXED: undefined offset protection
+	$errorText	= date("[d-M-Y H:i:s]", TIMESTAMP).' '.$errorType[$errno].': "'.strip_tags($exception->getMessage())."\"\r\n";
 	$errorText	.= 'File: '.$exception->getFile().' | Line: '.$exception->getLine()."\r\n";
 	$errorText	.= 'URL: '.PROTOCOL.HTTP_HOST.$_SERVER['REQUEST_URI'].' | Version: '.$VERSION."\r\n";
 	$errorText	.= "Stack trace:\r\n";

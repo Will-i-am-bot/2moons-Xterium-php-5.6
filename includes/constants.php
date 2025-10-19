@@ -155,7 +155,7 @@ define('AUTH_MOD'					, 1);
 define('AUTH_USR'					, 0);
 
 // Modules
-define('MODULE_AMOUNT'				, 44);
+define('MODULE_AMOUNT'				, 43);
 define('MODULE_ALLIANCE'			, 0);
 define('MODULE_BANLIST'				, 21);
 define('MODULE_BANNER'				, 37);
@@ -167,7 +167,6 @@ define('MODULE_DMEXTRAS'			, 8);
 define('MODULE_FLEET_EVENTS'		, 10);
 define('MODULE_FLEET_TABLE'			, 9);
 define('MODULE_FLEET_TRADER'		, 38);
-define('MODULE_GOVERNORS'			, 43);
 define('MODULE_GALAXY'				, 11);
 define('MODULE_IMPERIUM'			, 15);
 define('MODULE_INFORMATION'			, 14);

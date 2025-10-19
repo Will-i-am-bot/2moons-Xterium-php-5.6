@@ -38,15 +38,7 @@ class Config
 
 		while($configRow = $GLOBALS['DATABASE']->fetch_array($configResult))
 		{
-			$moduleSetting = trim($configRow['moduls']);
-			if($moduleSetting === '')
-			{
-				$configRow['moduls'] = array();
-			}
-			else
-			{
-				$configRow['moduls'] = array_map('intval', explode(";", $moduleSetting));
-			}
+			$configRow['moduls']		= explode(";", $configRow['moduls']);
 			self::$config[$configRow['uni']]	= $configRow;
 		}
 
@@ -132,42 +124,18 @@ class Config
 				throw new Exception("Unkown Config Key ".$configKey."!");
 			}
 			
-			$dbValue = $value;
-			$memoryValue = $value;
-			
-			if($configKey === 'moduls')
-			{
-				if(is_array($value))
-				{
-					$memoryValue = array_map('intval', $value);
-					$dbValue = implode(';', $memoryValue);
-				}
-				else
-				{
-					$dbValue = trim($value);
-					if($dbValue === '')
-					{
-						$memoryValue = array();
-					}
-					else
-					{
-						$memoryValue = array_map('intval', explode(';', $dbValue));
-					}
-				}
-			}
-			
 			if(in_array($configKey, $GLOBALS['BASICCONFIG']))
 			{
 				foreach(array_keys(self::$config) as $uniID)
 				{
-					self::$config[$uniID][$configKey]	= $memoryValue;
+					self::$config[$uniID][$configKey]	= $value;
 				}
-				$gameUpdate[]	= $configKey." = '".$GLOBALS['DATABASE']->escape($dbValue)."'";
+				$gameUpdate[]	= $configKey." = '".$GLOBALS['DATABASE']->escape($value)."'";
 			}
 			else
 			{
-				self::$config[$universe][$configKey]	= $memoryValue;
-				$uniUpdate[]	= $configKey." = '".$GLOBALS['DATABASE']->escape($dbValue)."'";
+				self::$config[$universe][$configKey]	= $value;
+				$uniUpdate[]	= $configKey." = '".$GLOBALS['DATABASE']->escape($value)."'";
 			}
 		}
 		

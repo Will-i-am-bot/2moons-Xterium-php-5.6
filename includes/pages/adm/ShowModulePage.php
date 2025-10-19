@@ -26,125 +26,40 @@
  * @link http://2moons.cc/
  */
 
-if (!allowedTo(str_replace(array(dirname(__FILE__), '\\', '/', '.php'), '', __FILE__))) {
-    throw new Exception("Permission error!");
-}
+if (!allowedTo(str_replace(array(dirname(__FILE__), '\\', '/', '.php'), '', __FILE__))) throw new Exception("Permission error!");
 
 function ShowModulePage()
 {
-    global $LNG;
+	global $CONF, $LNG;
+	
+	$module	= Config::get('moduls');
+	
+	if($_GET['mode']) {
+		$module[HTTP::_GP('id', 0)]	= ($_GET['mode'] == 'aktiv') ? 1 : 0;
+		Config::update(array('moduls' => implode(";", $module)));
+	}
+	
+	$IDs	= range(0, MODULE_AMOUNT - 1);
+	
+	foreach($IDs as $ID => $Name) {
+		$Modules[$ID]	= array(
+			'name'	=> $LNG['modul'][$ID], 
+			'state'	=> isset($module[$ID]) ? $module[$ID] : 1,
+		);
+	}
+	
+	asort($Modules);
+	$template	= new template();
 
-    $moduleList = array(
-        'Senate',
-        'Governors',
-        'Galaxy',
-        'Fleet',
-        'Defense',
-        'Buildings',
-        'Research',
-        'Market',
-        'Messages',
-        'Alliance',
-        'Expeditions',
-        'Statistics',
-        'Highscores',
-        'Trade',
-        'Tutorial',
-        'DailyBonus',
-        'Achievements',
-        'Auction',
-        'Premium',
-        'Chat',
-        'BattleSimulator',
-        'Notes',
-        'MultiAccounts',
-        'BanSystem',
-        'Giveaways',
-        'Creator',
-        'EditAccounts',
-        'AdminTools',
-        'ModulesManager',
-    );
-
-    $mode = HTTP::_GP('mode', '');
-    $rawModuleStates = Config::get('moduls');
-
-    if (!is_array($rawModuleStates)) {
-        $rawModuleStates = trim($rawModuleStates);
-        if ($rawModuleStates === '') {
-            $rawModuleStates = array();
-        } else {
-            $rawModuleStates = explode(';', $rawModuleStates);
-        }
-    }
-
-    $rawModuleStates = array_values(array_map('intval', $rawModuleStates));
-    $moduleCount = count($moduleList);
-    $normalizedStates = array();
-    $needsSync = false;
-
-    for ($index = 0; $index < $moduleCount; $index++) {
-        if (isset($rawModuleStates[$index])) {
-            $normalizedStates[$index] = (int)$rawModuleStates[$index];
-        } else {
-            $normalizedStates[$index] = 1;
-            $needsSync = true; // FIXED: auto-sync missing modules
-        }
-    }
-
-    $extraStates = array();
-    if (count($rawModuleStates) > $moduleCount) {
-        for ($index = $moduleCount; $index < count($rawModuleStates); $index++) {
-            $extraStates[$index] = (int)$rawModuleStates[$index];
-        }
-    }
-
-    if ($mode === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-        $enabledModules = isset($_POST['modules']) && is_array($_POST['modules']) ? $_POST['modules'] : array();
-        $enabledModules = array_map('strval', $enabledModules);
-        $updatedStates = array();
-
-        foreach ($moduleList as $index => $moduleName) {
-            $updatedStates[$index] = in_array($moduleName, $enabledModules) ? 1 : 0; // FIXED: added toggle control for all modules
-        }
-
-        if (!empty($extraStates)) {
-            foreach ($extraStates as $index => $stateValue) {
-                $updatedStates[$index] = $stateValue;
-            }
-        }
-
-        Config::update(array('moduls' => implode(';', $updatedStates))); // FIXED: dynamic update for config->moduls
-        HTTP::redirectTo('admin.php?page=module');
-    }
-
-    if ($needsSync) {
-        $syncStates = $normalizedStates;
-        if (!empty($extraStates)) {
-            foreach ($extraStates as $index => $stateValue) {
-                $syncStates[$index] = $stateValue;
-            }
-        }
-        Config::update(array('moduls' => implode(';', $syncStates)));
-    }
-
-    $modulesForTemplate = array();
-    foreach ($moduleList as $index => $moduleName) {
-        $modulesForTemplate[] = array(
-            'name' => $moduleName,
-            'state' => isset($normalizedStates[$index]) ? $normalizedStates[$index] : 1,
-        );
-    }
-
-    $template = new template();
-    $template->assign_vars(array(
-        'modules' => $modulesForTemplate,
-        'moduleFormAction' => 'admin.php?page=module&mode=save',
-        'mod_module' => $LNG['mod_module'],
-        'mod_info' => $LNG['mod_info'],
-        'mod_active' => $LNG['mod_active'],
-        'mod_deactive' => $LNG['mod_deactive'],
-        'mod_save_changes' => $LNG['cs_save_changes'],
-    ));
-    $template->show('ModulePage.tpl');
+	$template->assign_vars(array(
+		'Modules'				=> $Modules,
+		'mod_module'			=> $LNG['mod_module'],
+		'mod_info'				=> $LNG['mod_info'],
+		'mod_active'			=> $LNG['mod_active'],
+		'mod_deactive'			=> $LNG['mod_deactive'],
+		'mod_change_active'		=> $LNG['mod_change_active'],
+		'mod_change_deactive'	=> $LNG['mod_change_deactive'],
+	));
+	
+	$template->show('ModulePage.tpl');
 }

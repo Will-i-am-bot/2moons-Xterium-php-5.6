@@ -49,30 +49,9 @@ class template extends Smarty
 		$this->compile_check			= true; #Set false for production!
 		$this->php_handling				= Smarty::PHP_REMOVE;
 		
-		$compileDir = ROOT_PATH.'cache/';
-		if(!is_dir($compileDir) || !is_writable($compileDir))
-		{
-			$compileDir = $this->getTempPath();
-		}
-		$this->setCompileDir($compileDir);
-		
-		$cacheDir = ROOT_PATH.'cache/templates';
-		if(!is_dir($cacheDir))
-		{
-			@mkdir($cacheDir, 0777, true);
-		}
-		$this->setCacheDir($cacheDir);
-		
-		$templateDirectories = array();
-		$templateDirectories[] = ROOT_PATH.'styles/templates/';
-		
-		$gameTemplateDir = ROOT_PATH.'styles/templates/game/';
-		if(is_dir($gameTemplateDir))
-		{
-			$templateDirectories[] = $gameTemplateDir;
-		}
-		
-		$this->setTemplateDir($templateDirectories);
+		$this->setCompileDir(is_writable(ROOT_PATH.'cache/') ? ROOT_PATH.'cache/' : $this->getTempPath());
+		$this->setCacheDir(ROOT_PATH.'cache/templates');
+		$this->setTemplateDir(ROOT_PATH.'styles/templates/');
 	}
 	
 	public function loadscript($script)
@@ -99,77 +78,33 @@ class template extends Smarty
 	
 	private function adm_main()
 	{
-		global $LNG, $USER, $DATABASE, $UNI; // FIXED: unified admin layout
-
+		global $LNG, $USER;
+		
 		$dateTimeServer		= new DateTime("now");
 		if(isset($USER['timezone'])) {
 			try {
 				$dateTimeUser	= new DateTime("now", new DateTimeZone($USER['timezone']));
 			} catch (Exception $e) {
-				$dateTimeUser	= $dateTimeServer; // FIXED: undefined offset protection
+				$dateTimeUser	= $dateTimeServer;
 			}
 		} else {
 			$dateTimeUser	= $dateTimeServer;
 		}
-
+		
 		$this->assign_vars(array(
-				'scripts'				=> $this->script,
-				'title'				=> Config::get('game_name').' - '.$LNG['adm_cp_title'],
-				'fcm_info'			=> $LNG['fcm_info'],
-				'lang'				=> $LNG->getLanguage(),
-				'REV'				=> substr(Config::get('VERSION'), -4),
-				'date'				=> explode("|", date('Y|n|j|G|i|s|Z', TIMESTAMP)),
-				'Offset'			=> $dateTimeUser->getOffset() - $dateTimeServer->getOffset(),
-				'VERSION'			=> Config::get('VERSION'),
-				'dpath'				=> 'styles/theme/gow/',
-				'bodyclass'		=> 'full'
-		));
-
-		$currentPage = HTTP::_GP('page', 'overview'); // FIXED: preserve navigation
-		if(empty($currentPage))
-		{
-			$currentPage = 'overview'; // FIXED: preserve navigation
-		}
-
-		if($this->getTemplateVars('showAdminLayout') === NULL)
-		{
-			$this->assign_vars(array(
-					'showAdminLayout'		=> true, // FIXED: unified admin layout
-			));
-		}
-
-		if($this->getTemplateVars('pageTitle') === NULL)
-		{
-			$this->assign_vars(array(
-					'pageTitle'			=> Config::get('game_name').' - '.$LNG['adm_cp_title'], // FIXED: consistent include path
-			));
-		}
-
-		if(!isset($_SESSION['adminuni']) || empty($_SESSION['adminuni']))
-		{
-			$_SESSION['adminuni'] = $UNI; // FIXED: preserve navigation
-		}
-
-		$AvailableUnis  = array(); // FIXED: unified admin layout
-		$AvailableUnis[Config::get('uni')] = Config::get('uni_name').' (ID: '.Config::get('uni').')';
-
-		$UniverseQuery  = $DATABASE->query("SELECT `uni`, `uni_name` FROM ".CONFIG." WHERE `uni` != '".$UNI."' ORDER BY `uni` ASC;");
-
-		while($UniverseRow = $DATABASE->fetch_array($UniverseQuery))
-		{
-			$AvailableUnis[$UniverseRow['uni']] = $UniverseRow['uni_name'].' (ID: '.$UniverseRow['uni'].')'; // FIXED: preserve navigation
-		}
-
-		ksort($AvailableUnis);
-
-		$this->assign_vars(array(
-				'activePage'			=> $currentPage, // FIXED: unified admin layout
-				'AvailableUnis'		=> $AvailableUnis,
-				'UNI'				=> $_SESSION['adminuni'],
-				'adminUser'			=> $USER,
+			'scripts'			=> $this->script,
+			'title'				=> Config::get('game_name').' - '.$LNG['adm_cp_title'],
+			'fcm_info'			=> $LNG['fcm_info'],
+            'lang'    			=> $LNG->getLanguage(),
+			'REV'				=> substr(Config::get('VERSION'), -4),
+			'date'				=> explode("|", date('Y\|n\|j\|G\|i\|s\|Z', TIMESTAMP)),
+			'Offset'			=> $dateTimeUser->getOffset() - $dateTimeServer->getOffset(),
+			'VERSION'			=> Config::get('VERSION'),
+			'dpath'				=> 'styles/theme/gow/',
+			'bodyclass'			=> 'full'
 		));
 	}
-
+	
 	public function show($file)
 	{		
 		global $USER, $PLANET, $LNG, $THEME;
@@ -223,37 +158,11 @@ class template extends Smarty
 			'mes'		=> $mes,
 			'fcm_info'	=> $LNG['fcm_info'],
 			'Fatal'		=> $Fatal,
-			'dpath'		=> $THEME->getTheme(),
+            'dpath'		=> $THEME->getTheme(),
 		));
 		
 		$this->gotoside($dest, $time);
-	
-		$templateFile = 'error_message_body.tpl';
-		$templateDirectory = $this->locateTemplateDirectory($templateFile);
-	
-		if($templateDirectory === false)
-		{
-			$fallbackSource = $this->locateFallbackTemplate($templateFile);
-			if($fallbackSource !== false)
-			{
-				$templateDirectory = $this->prepareTemplateFromFallback($templateFile, $fallbackSource);
-			}
-			else
-			{
-				$templateDirectory = $this->generateDefaultErrorTemplate($templateFile);
-			}
-		}
-	
-		if($templateDirectory === false)
-		{
-			$this->displayInlineErrorMessage($mes, $dest, $time, $Fatal);
-			return;
-		}
-	
-		$currentTemplateDir = $this->getTemplateDir();
-		$this->setTemplateDir($templateDirectory);
-		$this->show($templateFile);
-		$this->setTemplateDir($currentTemplateDir);
+		$this->show('error_message_body.tpl');
 	}
 	
 	public static function printMessage($Message, $fullSide = true, $redirect = NULL) {
@@ -303,172 +212,4 @@ class template extends Smarty
             $this->{$name} = $value;
         }
     }
-
-	protected function locateTemplateDirectory($file)
-	{
-		$directories = $this->getTemplateDir();
-		if(!is_array($directories))
-		{
-			$directories = array($directories);
-		}
-
-		$defaultDirectories = array(
-			ROOT_PATH.'styles/templates/game/',
-			ROOT_PATH.'styles/templates/',
-		);
-
-		foreach($defaultDirectories as $directory)
-		{
-			if(!in_array($directory, $directories))
-			{
-				$directories[] = $directory;
-			}
-		}
-
-		$checked = array();
-		foreach($directories as $directory)
-		{
-			if(empty($directory))
-			{
-				continue;
-			}
-
-			$directory = rtrim($directory, '/\\').'/';
-
-			if(isset($checked[$directory]))
-			{
-				continue;
-			}
-
-			$checked[$directory] = true;
-
-			if(is_file($directory.$file))
-			{
-				return $directory;
-			}
-		}
-
-		return false;
-	}
-
-	protected function locateFallbackTemplate($file)
-	{
-		$paths = array(
-			ROOT_PATH.'styles/templates/game/'.$file,
-			ROOT_PATH.'styles/templates/'.$file,
-			ROOT_PATH.'styles/templates/adm/'.$file,
-			ROOT_PATH.'styles/templates/install/'.$file,
-		);
-
-		foreach($paths as $path)
-		{
-			if(is_file($path))
-			{
-				return $path;
-			}
-		}
-
-		return false;
-	}
-
-	protected function prepareTemplateFromFallback($file, $source)
-	{
-		$targetDir = ROOT_PATH.'styles/templates/game/';
-
-		if(!is_dir($targetDir))
-		{
-			@mkdir($targetDir, 0777, true);
-		}
-
-		if(is_dir($targetDir) && is_writable($targetDir))
-		{
-			if(@copy($source, $targetDir.$file) || is_file($targetDir.$file))
-			{
-				return $targetDir;
-			}
-		}
-
-		return dirname($source).'/';
-	}
-
-	protected function generateDefaultErrorTemplate($file)
-	{
-		$targetDir = ROOT_PATH.'styles/templates/game/';
-
-		if(!is_dir($targetDir))
-		{
-			@mkdir($targetDir, 0777, true);
-		}
-
-		if(is_dir($targetDir) && is_writable($targetDir))
-		{
-			$content = <<<'EOT'
-<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8" />
-	<title>{if isset($LNG.sys_error_headline)}{$LNG.sys_error_headline}{else}{$fcm_info}{/if}</title>
-	<link rel="stylesheet" type="text/css" href="{$dpath}formate.css" />
-</head>
-<body class="message error">
-	<div id="errorMessage">
-		<div class="messageBox">
-			<h1>{if isset($LNG.sys_error_headline)}{$LNG.sys_error_headline}{else}{$fcm_info}{/if}</h1>
-			<p>{$mes}</p>
-			{if $goto}
-			<p class="redirect">{$LNG.sys_redirect_message|default:'Weiterleitung'}: <a href="{$goto}">{$goto}</a></p>
-			{/if}
-		</div>
-	</div>
-	{if !$Fatal}
-	<script type="text/javascript">
-	{literal}
-		(function(){
-			var redirectLink = '{/literal}{$goto|default:''}{literal}';
-			var redirectDelay = {/literal}{$gotoinsec|default:0}{literal};
-			if(redirectLink !== '' && redirectDelay > 0){
-				window.setTimeout(function(){ window.location.href = redirectLink; }, redirectDelay * 1000);
-			}
-		})();
-	{/literal}
-	</script>
-	{/if}
-</body>
-</html>
-EOT;
-
-			if(@file_put_contents($targetDir.$file, $content) !== false)
-			{
-				return $targetDir;
-			}
-		}
-
-		return false;
-	}
-
-	protected function displayInlineErrorMessage($mes, $dest, $time, $Fatal)
-	{
-		header('Content-Type: text/html; charset=UTF-8');
-		$gameName = Config::get('game_name');
-		echo '<!DOCTYPE html><html><head><meta charset="UTF-8" />';
-		echo '<title>'.htmlspecialchars($gameName, ENT_QUOTES, 'UTF-8').'</title>';
-		echo '</head><body class="message error">';
-		echo '<div id="errorMessage"><div class="messageBox">';
-		echo '<h1>'.htmlspecialchars($gameName, ENT_QUOTES, 'UTF-8').'</h1>';
-		echo '<p>'.nl2br(htmlspecialchars($mes, ENT_QUOTES, 'UTF-8')).'</p>';
-		if(!empty($dest))
-		{
-			echo '<p class="redirect"><a href="'.htmlspecialchars($dest, ENT_QUOTES, 'UTF-8').'">'.htmlspecialchars($dest, ENT_QUOTES, 'UTF-8').'</a></p>';
-		}
-		if(!$Fatal && !empty($dest) && !empty($time))
-		{
-			$seconds = (int) $time;
-			echo '<script type="text/javascript">';
-			echo 'setTimeout(function(){ window.location.href = \'' . addslashes($dest) . '\'; }, ' . ($seconds * 1000) . ');';
-			echo '</script>';
-		}
-		echo '</div></div></body></html>';
-		exit;
-	}
-
 }

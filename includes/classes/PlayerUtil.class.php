@@ -59,16 +59,15 @@ class PlayerUtil {
 		}
 	}
 	
-	public static function valid_mail($address)
-	{
-		$domaine_bloques = array('jetable.com', 'ephemail.net', 'pisls.com', 'trbvm.com', 'yopmail.com', 'spamgourmet.com', 'haltospam.com', 'iximail.com', 'guerrillamail.com', '0-mail.com', 'spam.la', 'mytempemail.com', 'saynotospams.com', 'tempemail.co.za', 'mailinator.com', 'mytrashmail.com', 'mailexpire.com', 'maileater.com', 'spambox.us', '10minutemail.com', 'qisoa.com', 'toiea.com', 'dontreg.com', 'tempomail.fr', 'spamfree24.org', 'lemailcprivee.com', 'drdrb.com', 'sharklasers.com');
-		list(, $domaine) = explode('@', $address);
-
-		if (!filter_var($address, FILTER_VALIDATE_EMAIL) || in_array($domaine, $domaine_bloques)) {
-			return false;
-		}
-
-		return true;
+	function valid_mail($address) {
+ 
+    $domaine_bloques= array ('jetable.com', 'ephemail.net', 'pisls.com', 'trbvm.com', 'yopmail.com', 'spamgourmet.com', 'haltospam.com', 'iximail.com', 'guerrillamail.com', '0-mail.com', 'spam.la', 'mytempemail.com', 'saynotospams.com', 'tempemail.co.za', 'mailinator.com', 'mytrashmail.com', 'mailexpire.com', 'maileater.com', 'spambox.us', '10minutemail.com', 'qisoa.com', 'toiea.com', 'dontreg.com', 'tempomail.fr', 'spamfree24.org', 'lemailcprivee.com', 'drdrb.com', 'sharklasers.com' );
+    list( , $domaine) = explode('@', $address);
+ 
+    if (!filter_var($address, FILTER_VALIDATE_EMAIL) OR in_array($domaine, $domaine_bloques))
+        return false;
+ 
+    return true;   
 	}
 
 	static function isMailValid($address) {

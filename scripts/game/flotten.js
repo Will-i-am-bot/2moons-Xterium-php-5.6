@@ -495,13 +495,11 @@ function colorSet() {
 	});
 }
 function fleetPoints() {
-    if (typeof pointsPrice === 'undefined') return; // FIX: skip if no price table defined
-    var pointsCost = 0;
-    $('.countdots').each(function() {
-        var el_count = Number($(this).val().replace(/[^[0-9]|\.]/g, ''));
-        var el_name  = $(this).attr('name');
-        var el_pointsPrice = pointsPrice[el_name] || 0;
-        pointsCost += el_pointsPrice * el_count;
-    });
-    $('.totalFleetPoints').text(NumberGetHumanReadable(pointsCost));
+	var pointsCost = 0;
+	$('.countdots').each(function() {
+		el_count	= Number($(this).val().replace(/[^[0-9]|\.]/g, ''));
+		el_name		= $(this).attr('name');
+		pointsCost += (Number(pointsPrice[el_name]) * el_count);
+	});
+	$('.totalFleetPoints').text(NumberGetHumanReadable(Number(pointsCost)));
 }

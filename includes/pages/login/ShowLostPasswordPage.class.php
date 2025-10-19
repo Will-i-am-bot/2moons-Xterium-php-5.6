@@ -74,11 +74,6 @@ class ShowLostPasswordPage extends AbstractPage
 
 		$userData		= $GLOBALS['DATABASE']->getFirstRow("SELECT username, email_2 as mail FROM ".USERS." WHERE id = ".$userID.";");
 
-		if(!filter_var($userData['mail'], FILTER_VALIDATE_EMAIL))
-		{
-			throw new Exception('Invalid recipient address'); // FIXED: validate recipient email before sending
-		}
-
 		$MailRAW		= $GLOBALS['LNG']->getTemplate('email_lost_password_changed');
 		$MailContent	= str_replace(array(
 			'{USERNAME}',
@@ -115,10 +110,6 @@ class ShowLostPasswordPage extends AbstractPage
 		if(empty($mail))
 		{
 			$errorMessages[]	= t('passwordErrorMailEmpty');
-		}
-		if(!empty($mail) && !filter_var($mail, FILTER_VALIDATE_EMAIL))
-		{
-			$errorMessages[]	= t('registerErrorMailInvalid'); // FIXED: ensure entered mail address is valid
 		}
 		
 		
