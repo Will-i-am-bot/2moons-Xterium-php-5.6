@@ -1,4 +1,5 @@
 {include file="overall_header.tpl"}
+{include file="head_nav.tpl"}
 <table width="40%">
 <th colspan="9">{$new_creator_title}</th>
 <tr>
