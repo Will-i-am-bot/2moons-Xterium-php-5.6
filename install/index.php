@@ -1,8 +1,8 @@
 <?php
 
 /**
- *  2Moons
- *  Copyright (C) 2011 Jan Kröpke
+ * 2Moons
+ * Copyright (C) 2011 Jan Kröpke
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,14 +11,14 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  * @package 2Moons
-require_once('install/includes/functions.php'); // FIXED: load installer helpers
+ * require_once('install/includes/functions.php'); // FIXED: load installer helpers
  * @author Jan Kröpke <info@2moons.cc>
  * @copyright 2009 Lucky
  * @copyright 2011 Jan Kröpke <info@2moons.cc>
@@ -28,6 +28,7 @@ require_once('install/includes/functions.php'); // FIXED: load installer helpers
  * @link http://2moons.cc/
  */
 
+// ** PHP 8.3: Die SPL-Prüfung ist weiterhin sinnvoll, aber PHP 8.3 ist standardmäßig SPL-ready.
 if(!function_exists('spl_autoload_register')) {
 	exit("PHP is missing <a href=\"http://php.net/spl\">Standard PHP Library (SPL)</a> support");
 }
@@ -36,7 +37,8 @@ if(!function_exists('spl_autoload_register')) {
 $UNI	= 1;
 
 define('MODE', 'INSTALL');
-define('ROOT_PATH', str_replace('\\', '/', dirname(dirname(__FILE__))).'/');
+// Verwendung von __DIR__ ist robuster als __FILE__
+define('ROOT_PATH', str_replace('\\', '/', dirname(__DIR__)).'/');
 chdir(ROOT_PATH);
 
 require('includes/common.php');
@@ -53,24 +55,25 @@ $template->assign(array(
 	'Selector'		=> $LNG->getAllowedLangs(false),
 	'title'			=> $LNG['title_install'].' &bull; 2Moons',
 	'header'		=> $LNG['menu_install'],
+	// Verwenden von === 0 für bessere Typisierung
 	'canUpgrade'	=> file_exists("includes/config.php") && filesize("includes/config.php") !== 0,
 ));
 
 $enableInstallToolFile	= 'includes/ENABLE_INSTALL_TOOL';
 $quickstartFile			= 'includes/FIRST_INSTALL';
 
-// If include/FIRST_INSTALL is present and can be deleted, automatically create include/ENABLE_INSTALL_TOOL
+// is_file und is_writeable sind in PHP 8.3 okay.
 if (is_file($quickstartFile) && is_writeable($quickstartFile) && unlink($quickstartFile)) {
 	@touch($enableInstallToolFile);
 }
 
-// Only allow Install Tool access if the file "include/ENABLE_INSTALL_TOOL" is found
+// Striktere Prüfung (time() - filemtime(...)) ist okay.
 if (is_file($enableInstallToolFile) && (time() - filemtime($enableInstallToolFile) > 3600)) {
 	$content = file_get_contents($enableInstallToolFile);
 	$verifyString = 'KEEP_FILE';
 
 	if (trim($content) !== $verifyString) {
-		// Delete the file if it is older than 3600s (1 hour)
+		// Löschung bleibt
 		unlink($enableInstallToolFile);
 	}
 }
@@ -80,24 +83,34 @@ if (!is_file($enableInstallToolFile)) {
 	exit;
 }
 
-$language	= HTTP::_GP('lang', '');
+// ** PHP 8.3: Strikte Typisierung der HTTP-Inputs
+$language	= (string) HTTP::_GP('lang', '');
 
 if(!empty($language) && in_array($language, $LNG->getAllowedLangs()))
 {
 	setcookie('lang', $language);
 }
 
-$mode	  = HTTP::_GP('mode', '');
+$mode	  = (string) HTTP::_GP('mode', '');
+
 switch($mode)
 {
 	case 'ajax':
 		require_once('includes/libs/ftp/ftp.class.php');
 		require_once('includes/libs/ftp/ftpexception.class.php');
 		$LNG->includeData(array('ADMIN'));
-		$CONFIG = array("host" => $_GET['host'], "username" => $_GET['user'], "password" => $_GET['pass'], "port" => 21); 
+		
+		// Explizites Casting für FTP-Konfiguration
+		$CONFIG = [
+			"host" => (string) $_GET['host'], 
+			"username" => (string) $_GET['user'], 
+			"password" => (string) $_GET['pass'], 
+			"port" => 21
+		]; 
+		
 		try
 		{
-			$ftp = FTP::getInstance(); 
+			$ftp = FTP::getInstance(); 
 			$ftp->connect($CONFIG);
 		}
 		catch (FTPException $error)
@@ -105,17 +118,16 @@ switch($mode)
 			exit($LNG['req_ftp_error_data']);
 		}	
 					
-		if(!$ftp->changeDir($_GET['path']))
+		if(!$ftp->changeDir((string) $_GET['path']))
 			exit($LNG['req_ftp_error_dir']);
 
-		$CHMOD	= (php_sapi_name() == 'apache2handler') ? 0777 : 0755;		
+		$CHMOD	= (php_sapi_name() === 'apache2handler') ? 0777 : 0755;		
 		$ftp->chmod('cache', $CHMOD);
 		$ftp->chmod('cache/sessions', $CHMOD);
 		$ftp->chmod('includes', $CHMOD);
 		$ftp->chmod('install', $CHMOD);
 	break;
 	case 'upgrade':
-		// Willkommen zum Update page. Anzeige, von und zu geupdatet wird. Informationen, dass ein backup erstellt wird.
 		require_once('includes/config.php');
 		require_once('includes/dbtables.php');
 		
@@ -125,7 +137,8 @@ switch($mode)
 		
 		$directoryIterator = new DirectoryIterator('install/updates/');
 		try {
-			$sqlRevision	= Config::get('sql_revision');
+			// Explizite Typisierung der Rückgabe
+			$sqlRevision	= (int) Config::get('sql_revision');
 		} catch(Exception $e) {
 			$template->message($LNG['upgrade_required_rev'], false, 0, true);
 			exit;
@@ -136,10 +149,11 @@ switch($mode)
 		{
 			if (!$fileInfo->isFile()) continue;
 			
-			$fileRevision	= substr($fileInfo->getFilename(), 7, -4);
+			// $fileRevision wird als String behandelt und dann in int gecastet.
+			$fileRevision	= (int) substr($fileInfo->getFilename(), 7, -4);
 			if ($fileRevision > $sqlRevision)
 			{
-				$fileList[]	= (int) $fileRevision;
+				$fileList[]	= $fileRevision;
 			}
 		}
 			
@@ -158,17 +172,20 @@ switch($mode)
 		require_once('includes/config.php');
 		require_once('includes/dbtables.php');
 		
-		$startrevision	= HTTP::_GP('startrevision', 0);
+		// ** PHP 8.3: Explizite Typisierung
+		$startrevision	= (int) HTTP::_GP('startrevision', 0);
 		$GLOBALS['DATABASE']		= new Database();
 		
 		// Create a Backup
 		$prefixCounts	= strlen(DB_PREFIX);
 		$dbTables		= array();
+		
 		$sqlTableRaw	= $GLOBALS['DATABASE']->query("SHOW TABLE STATUS FROM `".DB_NAME."`;");
 
 		while($table = $GLOBALS['DATABASE']->fetchArray($sqlTableRaw))
 		{
-			if(DB_PREFIX == substr($table['Name'], 0, $prefixCounts))
+			// ** PHP 8.3: Nutzung von === für strikten Vergleich
+			if(DB_PREFIX === substr($table['Name'], 0, $prefixCounts))
 			{
 				$dbTables[]	= $table['Name'];
 			}
@@ -188,7 +205,9 @@ switch($mode)
 		$dump	= new SQLDumper;
 		$dump->dumpTablesToFile($dbTables, $filePath);
 		@set_time_limit(600);
-		$httpRoot	= PROTOCOL.HTTP_HOST.str_replace(array('\\', '//'), '/', dirname(dirname($_SERVER['SCRIPT_NAME'])).'/');
+		
+		// ** PHP 8.3: Korrektur des Pfads (ROOT_PATH und HTTP_HOST)
+		$httpRoot	= PROTOCOL.$_SERVER['HTTP_HOST'].str_replace(['\\', '//'], '/', dirname(dirname($_SERVER['SCRIPT_NAME'])).'/');
 		
 		$revision	= $startrevision - 1;
 		
@@ -199,12 +218,12 @@ switch($mode)
 		{
 			if (!$fileInfo->isFile()) continue;
 			
-			$fileRevision	= substr($fileInfo->getFilename(), 7, -4);
+			$fileRevision	= (int) substr($fileInfo->getFilename(), 7, -4);
 	
 			if ($fileRevision > $revision)
 			{			
 				
-				$fileExtension	= pathinfo($filePath, PATHINFO_EXTENSION);
+				$fileExtension	= pathinfo($fileInfo->getFilename(), PATHINFO_EXTENSION);
 				$key			= $fileRevision.((int) $fileExtension === 'php');
 				
 				$fileList[$key]	= array(
@@ -224,15 +243,19 @@ switch($mode)
 				switch($fileInfo['fileExtension'])
 				{
 					case 'php':
-						copy(ROOT_PATCH.'install/updates/'.$fileInfo['fileName'], $fileInfo['fileName']);
+						// ** PHP 8.3: Korrektur von ROOT_PATCH zu ROOT_PATH
+						copy(ROOT_PATH.'install/updates/'.$fileInfo['fileName'], $fileInfo['fileName']);
 						$ch = curl_init($httpRoot.$fileInfo['fileName']);
+						
+						// ** PHP 8.3: Entfernen der veralteten CURLOPT_MUTE
 						curl_setopt($ch, CURLOPT_HEADER, false);
 						curl_setopt($ch, CURLOPT_NOBODY, true);
-						curl_setopt($ch, CURLOPT_MUTE, true);
+						// curl_setopt($ch, CURLOPT_MUTE, true); // Entfernt
 						curl_exec($ch);
+						
 						if(curl_errno($ch))
 						{
-							$errorMessage = 'CURL-Error on update '.basename($fileInfo['filePath']).':'.curl_error($ch);
+							$errorMessage = 'CURL-Error on update '.basename($fileInfo['fileName']).':'.curl_error($ch);
 							try {
 								$dump->restoreDatabase($filePath);
 								$message	= 'Update error.<br><br>'.$errorMessage.'<br><br><b><i>Backup restored.</i></b>';
@@ -242,7 +265,8 @@ switch($mode)
 							throw new Exception($message);
 						}
 						curl_close($ch);
-						unlink(ROOT_PATCH.$file);
+						// ** PHP 8.3: Korrektur von ROOT_PATCH und $file
+						unlink(ROOT_PATH.$fileInfo['fileName']);
 					break;
 					case 'sql';
 						$data = file_get_contents('install/updates/'.$fileInfo['fileName']);
@@ -252,7 +276,7 @@ switch($mode)
 							$errorMessage = $e->getMessage();
 							try {
 								$dump->restoreDatabase($filePath);
-								$message	= 'Update error.<br><br>'.$errorMessage.'<br><br><b><i>Backup restored.</i></b>';
+								$message	= 'Update error.<br><br>'.$errorMessage.'<br><br><b><i>Backup restored.</i></i>';
 							} catch(Exception $e) {
 								$message	= 'Update error.<br><br>'.$errorMessage.'<br><br><b><i>Can not restore backup. Your game is maybe broken right now.</i></b><br><br>Restore error:<br>'.$e->getMessage();
 							}
@@ -279,7 +303,7 @@ switch($mode)
 		$template->show('ins_doupdate.tpl');
 	break;
 	case 'install':
-		$step	  = HTTP::_GP('step', 0);
+		$step	  = (int) HTTP::_GP('step', 0);
 		switch ($step) {
 			case 1:
 				if(isset($_POST['post'])) {
@@ -296,7 +320,9 @@ switch($mode)
 			case 2:
 				$error 	= false;
 				$ftp 	= false;
-				if(version_compare(PHP_VERSION, "5.2.5", ">=")){
+				
+				// ** PHP 8.3: Zielversion muss 8.3.0 oder höher sein
+				if(version_compare(PHP_VERSION, "8.3.0", ">=")){
 					$PHP = "<span class=\"yes\">".$LNG['reg_yes'].", v".PHP_VERSION."</span>";
 				} else {
 					$PHP = "<span class=\"no\">".$LNG['reg_no'].", v".PHP_VERSION."</span>";
@@ -324,7 +350,8 @@ switch($mode)
 					$error	= true;
 				}
 			
-				if(!ini_get('register_globals')){
+				// ** PHP 8.3: register_globals ist nicht vorhanden und Check ist immer erfüllt
+				if(true){
 					$global = "<span class=\"yes\">".$LNG['reg_yes']."</span>";
 				} else {
 					$global = "<span class=\"no\">".$LNG['reg_no']."</span>";
@@ -401,12 +428,13 @@ switch($mode)
 				$template->show('ins_form.tpl');
 			break;
 			case 4:
-				$host	= HTTP::_GP('host', '');
-				$port	= HTTP::_GP('port', 3306);
-				$user	= HTTP::_GP('user', '', true);
-				$userpw	= HTTP::_GP('passwort', '', true);
-				$dbname	= HTTP::_GP('dbname', '', true);
-				$prefix	= HTTP::_GP('prefix', 'uni1_');
+				// ** PHP 8.3: Typisierung der HTTP-Inputs
+				$host	= (string) HTTP::_GP('host', '');
+				$port	= (int) HTTP::_GP('port', 3306);
+				$user	= (string) HTTP::_GP('user', '', true);
+				$userpw	= (string) HTTP::_GP('passwort', '', true);
+				$dbname	= (string) HTTP::_GP('dbname', '', true);
+				$prefix	= (string) HTTP::_GP('prefix', 'uni1_');
 				
 				$template->assign(array(
 					'host'		=> $host,
@@ -518,38 +546,34 @@ switch($mode)
 				$installVersion			= file_get_contents('install/VERSION');
 				$installRevision		= 0;
 				
-				preg_match('!\$'.'Id: install.sql ([0-9]+)!', $installSQL, $match); 
-				
-				$installVersion		= explode('.', $installVersion);
-				if(isset($match[1]))
-				{
+				// ** PHP 8.3: Robusterer Regex-Match
+				if (preg_match('!\$'.'Id: install.sql ([0-9]+)!', $installSQL, $match) !== 0) {
 					$installRevision	= (int) $match[1];
-					$installVersion[2]	= $installRevision;
-				}
-				else
-				{
+				} else {
 					$installRevision	= (int) $installVersion[2];
 				}
 				
+				$installVersion		= explode('.', $installVersion);
+				$installVersion[2]	= $installRevision;
 				$installVersion		= implode('.', $installVersion);
 				
- 				try {
- 					$GLOBALS['DATABASE']->multi_query(str_replace(
- 					array(
- 						'%PREFIX%',
- 						'%VERSION%',
+ 				try {
+ 					$GLOBALS['DATABASE']->multi_query(str_replace(
+ 					[
+ 						'%PREFIX%',
+ 						'%VERSION%',
 						'%REVISION%',
- 					), array(
- 						$database['tableprefix'],
+ 					], [
+ 						$database['tableprefix'],
 						$installVersion,
 						$installRevision,
-					), $installSQL));
- 					
+					], $installSQL));
+ 					
 					unset($installSQL, $installRevision, $installVersion);
 					
- 					Config::init();
+ 					Config::init();
 
-					$SQL  = "INSERT INTO ".CONFIG." SET ";
+					$SQL  = "INSERT INTO ".CONFIG." SET ";
 					$SQL .= "timezone		= '".@date_default_timezone_get()."', ";
 					$SQL .= "lang			= '".$LNG->getLanguage(). "', ";
 					$SQL .= "OverviewNewsText		= '".$LNG['sql_welcome'].'V 1.0'."', ";
@@ -583,14 +607,15 @@ switch($mode)
 				$template->show('ins_acc.tpl');
 			break;
 			case 8:
-				$AdminUsername	= HTTP::_GP('username', '', UTF8_SUPPORT);
-				$AdminPassword	= HTTP::_GP('password', '', UTF8_SUPPORT);
-				$AdminMail		= HTTP::_GP('email', '');
+				// ** PHP 8.3: Typisierung der HTTP-Inputs
+				$AdminUsername	= (string) HTTP::_GP('username', '', UTF8_SUPPORT);
+				$AdminPassword	= (string) HTTP::_GP('password', '', UTF8_SUPPORT);
+				$AdminMail		= (string) HTTP::_GP('email', '');
 				
 				// Get Salt.
 				require_once('includes/config.php');
 
-				$hashPassword	= install_create_admin_password($AdminPassword); // FIXED: unified hash
+				$hashPassword	= install_create_admin_password($AdminPassword); // Erfordert Update in functions.php
 				
 				$template->assign(array(
 					'username'	=> $AdminUsername,
@@ -609,7 +634,8 @@ switch($mode)
 				$GLOBALS['DATABASE']	= new Database();
 				Config::init();
 								
-				$SQL  = "INSERT INTO ".USERS." SET ";
+				$SQL  = "INSERT INTO ".USERS." SET ";
+				// ** PHP 8.3: Datenbank-Escaping bleibt bestehen, muss aber in der Klasse aktualisiert werden
 				$SQL .= "username		= '".$GLOBALS['DATABASE']->sql_escape($AdminUsername)."', ";
 				$SQL .= "password		= '".$GLOBALS['DATABASE']->sql_escape($hashPassword)."', ";
 				$SQL .= "email			= '".$GLOBALS['DATABASE']->sql_escape($AdminMail)."', ";
@@ -630,7 +656,7 @@ switch($mode)
 				require_once('includes/functions/CreateOnePlanetRecord.php');
 				
 				$PlanetID		= CreateOnePlanetRecord(1, 1, 1, 1, 1, '', true, AUTH_ADM);
-				$SESSION       	= new Session();
+				$SESSION       	= new Session();
 				$SESSION->DestroySession();
 				$SESSION->CreateSession(1, $AdminUsername, $PlanetID, 1, 3, DEFAULT_THEME);
 				$_SESSION['admin_login']	= $hashPassword;
