@@ -1,8 +1,8 @@
 <?php
 
 /**
- *  2Moons
- *  Copyright (C) 2012 Jan Kröpke
+ * 2Moons
+ * Copyright (C) 2012 Jan Kröpke
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,17 +11,17 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  * @package 2Moons
  * @author Jan Kröpke <info@2moons.cc>
  * @copyright 2012 Jan Kröpke <info@2moons.cc>
  * @license http://www.gnu.org/licenses/gpl.html GNU GPLv3 License
- * @version 1.7.3 (2013-05-19)
+ * @version 1.7.3 (2013-05-19) // Migrated for PHP 8.3 Compatibility
  * @info $Id: class.Database.php 2632 2013-03-18 19:05:14Z slaver7 $
  * @link http://2moons.cc/
  */
@@ -29,16 +29,10 @@
 class Database extends mysqli
 {
 	protected $con;
-	protected $exception;	public $queryCount; # <--
+	protected $exception;	public $queryCount;
 
 	/**
 	 * Constructor: Set database access data.
-	 *
-	 * @param string	The database host
-	 * @param string	The database username
-	 * @param string	The database password
-	 * @param string	The database name
-	 * @param integer	The database port
 	 *
 	 * @return void
 	 */
@@ -50,14 +44,16 @@ class Database extends mysqli
             $this->con['port'] = 3306;
         }
 
-		@parent::__construct($this->con['host'], $this->con['user'], $this->con['userpw'], $this->con['databasename'], $this->con['port']);
+		// PHP 8.3 Compatibility: Removed @ to ensure proper error visibility if connection fails.
+		// The error is already handled by the subsequent mysqli_connect_error() check.
+		parent::__construct($this->con['host'], $this->con['user'], $this->con['userpw'], $this->con['databasename'], $this->con['port']);
 
 		if(mysqli_connect_error())
 		{
 			throw new Exception("Connection to database failed: ".mysqli_connect_error());
 		}		
 		parent::set_charset("utf8");
-		#parent::query("SET SESSION sql_mode = '';");
+		// Keep STRICT_ALL_TABLES for modern MySQL/MariaDB compatibility and type safety
 		parent::query("SET SESSION sql_mode = 'STRICT_ALL_TABLES';");
 	}
 
@@ -257,7 +253,7 @@ class Database extends mysqli
 		if(parent::multi_query($resource))
 		{
 			do {
-			    if ($result = parent::store_result())
+			    if ($result = parent::store_result())
 					$result->free();
 				
 				$this->queryCount++;
